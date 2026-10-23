@@ -1,0 +1,285 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@font-face {
+  font-family: 'Lepetitcochon';
+  src: url('/fonts/Lepetitcochon.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DOSans';
+  src: url('/fonts/DO-Sans.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lazydog';
+  src: url('/fonts/Lazydog.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --font-lepetit: 'Lepetitcochon', cursive, sans-serif;
+  --font-dosans: 'DOSans', sans-serif;
+  --font-lazydog: 'Lazydog', cursive, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Mode Light: Background Pink Muda, Kombinasi Biru Logo (#4d3085) */
+  --background: #fff0f5; /* Pink muda lembut (Lavender Blush) */
+  --foreground: #2d164d; /* Teks biru gelap logo Rumah Balon */
+  --card: #ffffff;
+  --card-foreground: #2d164d;
+  --popover: #ffffff;
+  --popover-foreground: #2d164d;
+  --primary: #f370a8; /* Pink Rumah Balon */
+  --primary-foreground: #ffffff;
+  --secondary: #4d3085; /* Biru logo Rumah Balon */
+  --secondary-foreground: #ffffff;
+  --muted: #fce7f3; /* Pink muda lembut untuk background muted */
+  --muted-foreground: #664a8a; /* Biru keunguan netral untuk subteks */
+  --accent: #fdf2f8;
+  --accent-foreground: #4d3085;
+  --destructive: #e11d48;
+  --border: #f9cbdc; /* Garis border pink pastel */
+  --input: #fce7f3;
+  --ring: #4d3085;
+  --radius: 0.75rem;
+}
+
+.dark {
+  /* Mode Dark: Background Biru Gelap Logo (#120b24), Kombinasi Dominan Pink (#f370a8) */
+  --background: #120b24; /* Biru gelap pekat bernada logo Rumah Balon, bukan hitam */
+  --foreground: #ffffff;
+  --card: #1c1236; /* Permukaan kartu biru navy-purple gelap */
+  --card-foreground: #ffffff;
+  --popover: #1c1236;
+  --popover-foreground: #ffffff;
+  --primary: #f370a8; /* Pink Rumah Balon yang dominan */
+  --primary-foreground: #ffffff;
+  --secondary: #4d3085;
+  --secondary-foreground: #ffffff;
+  --muted: #271948;
+  --muted-foreground: #d2bdf5; /* Lavender cerah untuk teks sekunder */
+  --accent: #33194a;
+  --accent-foreground: #f370a8;
+  --destructive: #f43f5e;
+  --border: #35215e; /* Border biru keunguan gelap */
+  --input: #271948;
+  --ring: #f370a8;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Prevent iOS Safari auto-zoom when tapping inputs/selects on mobile */
+  @media screen and (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Prevent modern color parsing issues in html2canvas PDF/PNG capture */
+  #invoice-preview-capture,
+  #invoice-preview-capture * {
+    outline: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 150, 150, 0.45);
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Print Specific Optimizations */
+@media print {
+  @page {
+    size: 148mm 210mm;
+    margin: 0mm !important;
+  }
+
+  html, body {
+    width: 148mm !important;
+    height: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff9f5 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide background elements by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Unclip and reset dialog container hierarchy so print doesn't get clipped */
+  [data-slot="dialog-portal"],
+  [data-slot="dialog-overlay"],
+  [data-slot="dialog-content"],
+  [role="dialog"],
+  div:has(> #invoice-preview-capture),
+  div:has(> * > #invoice-preview-capture),
+  div:has(> * > * > #invoice-preview-capture) {
+    position: static !important;
+    transform: none !important;
+    overflow: visible !important;
+    max-width: none !important;
+    max-height: none !important;
+    width: 148mm !important;
+    height: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    visibility: visible !important;
+  }
+
+  #invoice-preview-capture,
+  #invoice-preview-capture *,
+  #crew-dispatch-sheet,
+  #crew-dispatch-sheet * {
+    visibility: visible !important;
+  }
+
+  #invoice-preview-capture {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 148mm !important;
+    height: 210mm !important;
+    max-width: 148mm !important;
+    max-height: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: #fff9f5 !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #crew-dispatch-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Mobile & Touch Ergonomics Utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 16px);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

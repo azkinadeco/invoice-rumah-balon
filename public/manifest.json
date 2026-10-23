@@ -1,0 +1,17 @@
+{
+  "name": "Rumah Balon Invoice Studio",
+  "short_name": "Rumah Balon",
+  "description": "Aplikasi Admin Generator Invoice & Jadwal Dekorasi Rumah Balon Malang",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff0f5",
+  "theme_color": "#fff0f5",
+  "icons": [
+    {
+      "src": "/images/balloon_single.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
