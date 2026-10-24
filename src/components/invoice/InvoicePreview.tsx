@@ -445,11 +445,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
               <span>
                 {data.contactIg
                   ? (data.contactIg.startsWith('@') ? data.contactIg : `@${data.contactIg}`)
-                  : (data.socialMedia || '@rumahbalon_mlg')}
+                  : '@rumahbalon_mlg'}
               </span>
             </div>
             <div className="text-[9.5px] font-medium text-white">
-              {data.contactWa || data.contactPhone || '+62 857-8612-1897'}
+              {data.contactWa || '+62 857-8612-1897'}
             </div>
           </div>
         </div>
