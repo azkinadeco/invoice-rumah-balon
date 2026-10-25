@@ -47,6 +47,33 @@ interface CrewDispatchSheetModalProps {
   onUpdateInvoice?: (updated: InvoiceData) => void;
 }
 
+// html2canvas can't parse oklch()/lab() (Tailwind v4 colors). Resolve any CSS color to plain rgba().
+let colorCtx: CanvasRenderingContext2D | null = null;
+const toRgba = (value: string): string => {
+  if (!value || value === 'transparent' || value.startsWith('rgb')) return value;
+  colorCtx ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  if (!colorCtx) return value;
+  colorCtx.clearRect(0, 0, 1, 1);
+  colorCtx.fillStyle = '#000';
+  colorCtx.fillStyle = value;
+  colorCtx.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = colorCtx.getImageData(0, 0, 1, 1).data;
+  return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+};
+
+const COLOR_PROPS = [
+  'color',
+  'background-color',
+  'border-top-color',
+  'border-right-color',
+  'border-bottom-color',
+  'border-left-color',
+  'outline-color',
+  'text-decoration-color',
+  'fill',
+  'stroke',
+] as const;
+
 export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
   open,
   onOpenChange,
@@ -110,19 +137,32 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
         clonedDoc.documentElement.classList.remove('dark');
         clonedDoc.body.classList.remove('dark');
 
-        clonedDoc.querySelectorAll('style').forEach((styleEl) => {
-          if (styleEl.textContent) {
-            styleEl.textContent = styleEl.textContent
-              .replace(/oklch\([^)]+\)/gi, '#4d3085')
-              .replace(/color-mix\([^)]+\)/gi, '#f370a8')
-              .replace(/lab\([^)]+\)/gi, '#4d3085');
-          }
-        });
-
         if (clonedEl) {
-          clonedEl.style.boxShadow = 'none';
+          // Bake computed colors from the live element into the clone as inline rgba()
+          const liveNodes = [element, ...Array.from(element.querySelectorAll<HTMLElement>('*'))];
+          const cloneNodes = [clonedEl, ...Array.from(clonedEl.querySelectorAll<HTMLElement>('*'))];
+          liveNodes.forEach((live, idx) => {
+            const clone = cloneNodes[idx];
+            if (!clone) return;
+            const cs = getComputedStyle(live);
+            COLOR_PROPS.forEach((prop) => {
+              clone.style.setProperty(prop, toRgba(cs.getPropertyValue(prop)), 'important');
+            });
+            clone.style.setProperty('box-shadow', 'none', 'important');
+            clone.style.setProperty('background-image', 'none', 'important');
+          });
+
+          // Paper checkboxes are print-only; reveal them, hide interactive/screen-only UI
+          clonedEl.querySelectorAll<HTMLElement>('[data-print-box]').forEach((el) => {
+            el.style.setProperty('display', 'inline-block', 'important');
+          });
+          clonedEl.querySelectorAll<HTMLElement>('.no-print').forEach((el) => {
+            el.style.setProperty('display', 'none', 'important');
+          });
+
           clonedEl.style.transform = 'none';
           clonedEl.style.margin = '0 auto';
+          clonedEl.style.setProperty('border-color', '#d4d4d8', 'important');
         }
       },
     });
@@ -134,31 +174,10 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
       setIsGeneratingPdf(true);
       await new Promise((r) => setTimeout(r, 100));
 
-      const canvas = await captureSheetCanvas();
-      if (!canvas) {
-        throw new Error('Canvas capture returned null');
-      }
-
-      const { default: jsPDF } = await import('jspdf');
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
-
-      const pageWidth = 210;
-      const pageHeight = 297;
-      const margin = 10;
-      const maxImgWidth = pageWidth - margin * 2;
-      const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'PNG', margin, margin, maxImgWidth, Math.min(imgHeight, pageHeight - margin * 2), undefined, 'FAST');
+      const { buildCrewSheetPdf } = await import('@/lib/crewSheetPdf');
+      const pdfBlob = await buildCrewSheetPdf(invoice);
       const fileName = `Lembar_Kerja_Crew_#${invoice.invoiceNumber || 'RumahBalon'}_${(invoice.clientName || 'Client').replace(/\s+/g, '_')}.pdf`;
 
-      const pdfBlob = pdf.output('blob');
       const blobUrl = URL.createObjectURL(pdfBlob);
       const downloadLink = document.createElement('a');
       downloadLink.href = blobUrl;
@@ -553,12 +572,12 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
 
             {/* Event & Job Meta Details */}
             <div className="grid grid-cols-2 gap-4 py-4 border-b border-zinc-200 text-xs">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-zinc-500 block">
                     Pelanggan / Pemesan
                   </span>
-                  <span className="font-extrabold text-sm text-zinc-900">
+                  <span className="font-extrabold text-sm text-zinc-900 block mt-0.5">
                     {invoice.clientName || '—'}
                   </span>
                   {invoice.clientPhone ? (
@@ -567,7 +586,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`Hubungi WhatsApp pelanggan: ${invoice.clientPhone}`}
-                      className="text-zinc-600 hover:text-emerald-700 font-mono text-[11px] mt-0.5 inline-flex items-center gap-1 transition-colors"
+                      className="text-zinc-600 hover:text-emerald-700 font-mono text-[11px] mt-1 flex items-center gap-1.5 transition-colors"
                     >
                       <Phone className="w-3 h-3 text-emerald-600 inline" />
                       <span>{invoice.clientPhone}</span>
@@ -602,23 +621,23 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                 )}
               </div>
 
-              <div className="space-y-2 bg-zinc-50 p-3 rounded-xl border border-zinc-200">
+              <div className="space-y-2.5 bg-zinc-50 p-3 rounded-xl border border-zinc-200 self-start">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-zinc-500 block">
                     Jadwal Hari & Tanggal Acara
                   </span>
-                  <span className="font-extrabold text-xs text-[#4d3085]">
+                  <span className="font-extrabold text-sm text-[#4d3085] block mt-0.5">
                     {invoice.bookingDate ? formatDateIndo(invoice.bookingDate) : '—'}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-200">
+                <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-zinc-200">
                   <div>
                     <span className="text-[9px] uppercase font-bold text-zinc-500 block">
                       Jam Setup Balon
                     </span>
-                    <span className="font-mono font-black text-xs text-rose-600">
-                      {invoice.setupTime || '11:00'} WIB
+                    <span className="font-mono font-black text-xs text-zinc-900">
+                      {invoice.setupTime === '00:00' ? '—' : `${invoice.setupTime || '11:00'} WIB`}
                     </span>
                   </div>
                   <div>
@@ -653,12 +672,12 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
 
             {/* Checklist Table 1: Item / Paket Pesanan Client */}
             <div className="py-4 space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-0.5 sm:gap-3">
                 <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 flex items-center gap-1.5">
-                  <CheckSquare className="w-3.5 h-3.5 text-[#4d3085]" />
-                  1. Paket & Item Pesanan Client (Sesuai Invoice)
+                  <CheckSquare className="w-3.5 h-3.5 text-[#4d3085] shrink-0" />
+                  1. Paket & Item Pesanan Client
                 </h4>
-                <span className="text-[10px] text-zinc-500 italic">
+                <span className="text-[10px] text-zinc-500 italic pl-5 sm:pl-0">
                   Centang [✓] saat packing & setelah bongkar
                 </span>
               </div>
@@ -675,18 +694,18 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
                     {invoice.items.map((it, idx) => (
-                      <tr key={it.id || idx} className="hover:bg-zinc-50/50">
-                        <td className="p-2 text-center">
-                          <span className="inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm" />
+                      <tr key={it.id || idx} className="hover:bg-zinc-50/50 align-middle">
+                        <td className="py-2.5 px-2 text-center">
+                          <span className="inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm align-middle" />
                         </td>
-                        <td className="p-2 font-medium text-zinc-900 whitespace-pre-line">
+                        <td className="py-2.5 px-2 font-medium text-zinc-900 whitespace-pre-line">
                           {it.description}
                         </td>
-                        <td className="p-2 text-center font-mono font-bold text-zinc-800">
+                        <td className="py-2.5 px-2 text-center font-mono font-bold text-zinc-800">
                           {it.quantity || 1}
                         </td>
-                        <td className="p-2 text-center">
-                          <span className="inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm" />
+                        <td className="py-2.5 px-2 text-center">
+                          <span className="inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm align-middle" />
                         </td>
                       </tr>
                     ))}
@@ -697,18 +716,18 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
 
             {/* Checklist Table 2: Properti & Alat Gudang (Terkoneksi ke Inventory) */}
             <div className="py-3 space-y-2.5 border-t border-zinc-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
+                <div className="space-y-1">
                   <h4 className="text-xs font-black uppercase tracking-wider text-zinc-900 flex items-center gap-1.5">
-                    <Boxes className="w-3.5 h-3.5 text-[#f370a8]" />
-                    2. Checklist Alat & Properti Gudang (Packing List)
+                    <Boxes className="w-3.5 h-3.5 text-[#f370a8] shrink-0" />
+                    2. Alat & Properti Gudang
+                    <span className="normal-case tracking-normal text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-[#4d3085]">
+                      {dispatchedProps.length} item
+                    </span>
                   </h4>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-[#4d3085]">
-                    {dispatchedProps.length} Alat Terhubung
-                  </span>
-                  <span className="no-print text-[10px] font-medium text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                    Checklist lapangan • Tidak memotong saldo master
-                  </span>
+                  <p className="no-print text-[10px] text-zinc-500 pl-5">
+                    Checklist lapangan, tidak memotong saldo stok master.
+                  </p>
                 </div>
 
                 {/* Tombol Ambil dari Stok Gudang (Screen Only) */}
@@ -718,123 +737,164 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                     size="sm"
                     variant="outline"
                     onClick={() => setIsAddingProperty((p) => !p)}
-                    className="h-7 px-2.5 text-[11px] font-bold text-[#4d3085] rounded-lg border-dashed border-[#4d3085]/40 hover:bg-[#4d3085]/10 flex items-center gap-1 cursor-pointer"
+                    className="h-9 w-full sm:w-auto px-3 text-[11px] font-bold text-[#4d3085] rounded-lg border-dashed border-[#4d3085]/40 hover:bg-[#4d3085]/10 flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Plus className="w-3 h-3 text-[#f370a8]" />
-                    <span>+ Ambil dari Stok Gudang</span>
+                    <Plus className="w-3.5 h-3.5 text-[#f370a8]" />
+                    <span>Ambil dari Stok Gudang</span>
                   </Button>
                 </div>
               </div>
 
               {/* Add Property Selector Panel (Screen Only) */}
               {isAddingProperty && (
-                <div className="no-print p-3 rounded-2xl bg-muted/60 border border-border space-y-2.5 text-xs">
-                  <div className="font-bold text-xs text-foreground flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <Boxes className="w-4 h-4 text-[#f370a8]" />
-                      <span>Pilih Alat / Properti dari Master Gudang</span>
-                    </span>
+                <div className="no-print rounded-2xl bg-zinc-50 border border-zinc-300 text-zinc-900 text-xs overflow-hidden">
+                  <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-zinc-200 bg-white">
+                    <span className="font-bold text-sm">Tambah dari Stok Gudang</span>
                     <button
                       type="button"
                       onClick={() => setIsAddingProperty(false)}
-                      className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted"
+                      className="text-zinc-500 hover:text-zinc-900 p-1.5 rounded-lg hover:bg-zinc-100 cursor-pointer"
                       aria-label="Tutup panel tambah properti"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
 
-                  {/* Category Pills & Quick Search */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-border/60">
-                    <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-                      {[
-                        { id: 'all', label: 'Semua' },
-                        { id: 'properti', label: 'Properti / Arch' },
-                        { id: 'balon', label: 'Stok Balon' },
-                        { id: 'alat', label: 'Pompa & Alat' },
-                      ].map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setStockCategoryTab(tab.id as any)}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer whitespace-nowrap ${
-                            stockCategoryTab === tab.id
-                              ? 'bg-[#4d3085] text-white shadow-2xs'
-                              : 'bg-background hover:bg-muted text-muted-foreground hover:text-foreground border border-border'
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
+                  <div className="p-3.5 space-y-3">
+                    {/* 1. Cari & filter kategori */}
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                        <input
+                          type="text"
+                          value={stockSearch}
+                          onChange={(e) => setStockSearch(e.target.value)}
+                          placeholder="Cari barang gudang..."
+                          className="w-full h-10 pl-9 pr-3 text-xs rounded-xl border border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-[#4d3085]"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                        {[
+                          { id: 'all', label: 'Semua' },
+                          { id: 'properti', label: 'Properti / Arch' },
+                          { id: 'balon', label: 'Stok Balon' },
+                          { id: 'alat', label: 'Pompa & Alat' },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setStockCategoryTab(tab.id as any)}
+                            className={`h-8 px-3 rounded-full text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                              stockCategoryTab === tab.id
+                                ? 'bg-[#4d3085] text-white border-[#4d3085]'
+                                : 'bg-white text-zinc-600 border-zinc-300 hover:bg-zinc-100'
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="relative w-full sm:w-48">
-                      <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-muted-foreground" />
+                    {/* 2. Pilih barang dari daftar */}
+                    <div className="max-h-52 overflow-y-auto rounded-xl border border-zinc-300 bg-white divide-y divide-zinc-200">
+                      {filteredStock.length === 0 ? (
+                        <div className="p-4 text-center text-zinc-400 italic">Tidak ada barang yang cocok.</div>
+                      ) : (
+                        filteredStock.map((invIt) => {
+                          const picked = selectedInventoryId === invIt.id;
+                          return (
+                            <button
+                              key={invIt.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedInventoryId(picked ? '' : invIt.id);
+                                setCustomPropName('');
+                              }}
+                              aria-pressed={picked}
+                              className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-3 cursor-pointer transition-colors ${
+                                picked ? 'bg-[#4d3085]/10' : 'hover:bg-zinc-50'
+                              }`}
+                            >
+                              <span className="min-w-0">
+                                <span className="block font-semibold text-zinc-900 truncate">{invIt.name}</span>
+                                <span className="block text-[10px] text-zinc-500 truncate">
+                                  Rak: {invIt.location || 'Gudang'}
+                                </span>
+                              </span>
+                              <span className="flex items-center gap-2 shrink-0">
+                                <span className="text-[11px] font-mono font-bold text-zinc-700">
+                                  {invIt.totalStock} {invIt.unit}
+                                </span>
+                                <span
+                                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    picked ? 'border-[#4d3085] bg-[#4d3085] text-white' : 'border-zinc-300'
+                                  }`}
+                                >
+                                  {picked && <Check className="w-2.5 h-2.5" />}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* 3. Alternatif: ketik manual */}
+                    <div>
+                      <label className="text-[11px] font-semibold text-zinc-500 block mb-1">
+                        Tidak ada di daftar? Ketik manual
+                      </label>
                       <input
                         type="text"
-                        value={stockSearch}
-                        onChange={(e) => setStockSearch(e.target.value)}
-                        placeholder="Cari barang gudang..."
-                        className="w-full h-8 pl-7 pr-2 text-[11px] rounded-lg border border-border bg-background text-foreground"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                    <div className="sm:col-span-7">
-                      <select
-                        value={selectedInventoryId}
+                        value={customPropName}
                         onChange={(e) => {
-                          setSelectedInventoryId(e.target.value);
-                          if (e.target.value) setCustomPropName('');
+                          setCustomPropName(e.target.value);
+                          if (e.target.value) setSelectedInventoryId('');
                         }}
-                        className="w-full h-9 px-2.5 text-xs rounded-xl border border-border bg-background text-foreground font-medium outline-none cursor-pointer"
-                      >
-                        <option value="">-- Pilih Barang ({filteredStock.length} barang tersedia) --</option>
-                        {filteredStock.map((invIt) => (
-                          <option key={invIt.id} value={invIt.id}>
-                            {invIt.name} (Stok: {invIt.totalStock} {invIt.unit}) • Rak: {invIt.location || 'Gudang'}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="sm:col-span-3 flex items-center gap-1.5">
-                      <span className="text-[11px] text-muted-foreground font-bold shrink-0">Qty:</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={propQty}
-                        onChange={(e) => setPropQty(Math.max(1, Number(e.target.value) || 1))}
-                        className="w-full h-9 px-2 text-center text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground"
+                        placeholder="Misal: Blower Balon Cadangan / Tali Rafia"
+                        className="w-full h-10 px-3 text-xs rounded-xl border border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-[#4d3085]"
                       />
                     </div>
 
-                    <div className="sm:col-span-2">
+                    {/* 4. Jumlah & tambah */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <div className="flex items-center rounded-xl border border-zinc-300 bg-white shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setPropQty((q) => Math.max(1, q - 1))}
+                          aria-label="Kurangi jumlah"
+                          className="w-10 h-10 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 rounded-l-xl cursor-pointer"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={propQty}
+                          onChange={(e) => setPropQty(Math.max(1, Number(e.target.value) || 1))}
+                          aria-label="Jumlah"
+                          className="w-12 h-10 text-center text-sm font-mono font-bold bg-transparent text-zinc-900 outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setPropQty((q) => q + 1)}
+                          aria-label="Tambah jumlah"
+                          className="w-10 h-10 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 rounded-r-xl cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
                       <Button
                         type="button"
-                        size="sm"
                         onClick={handleAddDispatchedProperty}
-                        className="w-full h-9 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white text-xs font-bold"
+                        disabled={!selectedInventoryId && !customPropName.trim()}
+                        className="flex-1 h-10 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white text-xs font-bold disabled:opacity-40"
                       >
-                        Tambah
+                        <Plus className="w-4 h-4 mr-1" />
+                        Tambah ke Checklist
                       </Button>
                     </div>
-                  </div>
-
-                  {/* Manual Type Fallback */}
-                  <div className="pt-1 flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground shrink-0">Atau ketik manual:</span>
-                    <input
-                      type="text"
-                      value={customPropName}
-                      onChange={(e) => {
-                        setCustomPropName(e.target.value);
-                        if (e.target.value) setSelectedInventoryId('');
-                      }}
-                      placeholder="Misal: Blower Balon Cadangan / Tali Rafia"
-                      className="flex-1 h-8 px-2.5 text-xs rounded-lg border border-border bg-background text-foreground"
-                    />
                   </div>
                 </div>
               )}
@@ -857,7 +917,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                         <td colSpan={5} className="p-4 text-center text-zinc-400 italic">
                           Belum ada properti atau alat gudang yang ditambahkan ke checklist ini.
                           <span className="no-print block text-[11px] text-[#4d3085] font-semibold mt-1">
-                            Klik &quot;+ Ambil dari Stok Gudang&quot; di atas untuk menghubungkan pompa, tangga, atau arch besi.
+                            Klik &quot;Ambil dari Stok Gudang&quot; di atas untuk menghubungkan pompa, tangga, atau arch besi.
                           </span>
                         </td>
                       </tr>
@@ -881,7 +941,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                               </span>
                             </button>
                             {/* Print box for paper checking */}
-                            <span className="hidden print:inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm" />
+                            <span data-print-box className="hidden print:inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm" />
                           </td>
 
                           {/* Nama Properti */}
@@ -986,7 +1046,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                                 {p.checkedIn && <Check className="w-3.5 h-3.5 font-bold" />}
                               </span>
                             </button>
-                            <span className="hidden print:inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm" />
+                            <span data-print-box className="hidden print:inline-block w-4 h-4 border-2 border-zinc-400 rounded-sm" />
                           </td>
 
                           {/* Aksi Hapus (Screen Only) */}
@@ -1022,31 +1082,24 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
             )}
 
             {/* Signatures & Handover Footer */}
-            <div className="grid grid-cols-2 gap-8 pt-8 mt-4 border-t border-zinc-300 text-center text-xs">
-              <div className="space-y-12">
-                <p className="text-[10px] font-bold text-zinc-500 uppercase">
-                  PIC Workshop / Dispatcher
-                </p>
-                <div className="pt-2 border-t border-zinc-400 font-bold text-zinc-800">
-                  ( ........................................ )
+            <div className="grid grid-cols-2 gap-10 mt-6 pt-5 border-t border-zinc-300 text-center text-xs break-inside-avoid">
+              {['PIC Workshop / Dispatcher', 'Koordinator Crew Lapangan'].map((role) => (
+                <div key={role}>
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide">{role}</p>
+                  {/* Signature space */}
+                  <div className="h-20" />
+                  <div className="border-t border-zinc-500 pt-1.5 text-[10px] text-zinc-500">
+                    Nama jelas &amp; tanda tangan
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-12">
-                <p className="text-[10px] font-bold text-zinc-500 uppercase">
-                  Koordinator Crew Lapangan
-                </p>
-                <div className="pt-2 border-t border-zinc-400 font-bold text-zinc-800">
-                  ( ........................................ )
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Modal Footer (Screen Only) */}
-        <DialogFooter className="no-print px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border bg-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <span className="text-[11px] text-muted-foreground">
+        <DialogFooter className="no-print mx-0 mb-0 rounded-none px-4 sm:px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border bg-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <span className="text-[11px] text-muted-foreground leading-relaxed">
             Tips: Checklist tersimpan otomatis dan bisa dicentang langsung di HP atau dicetak ke kertas.
           </span>
           <Button

@@ -1,12 +1,12 @@
 'use client';
 
+import { FilterBar } from '@/components/common/FilterBar';
 import React, { useState, useMemo } from 'react';
 import { InvoiceData, ScheduleStatus } from '@/types/invoice';
 import { InventoryItem } from '@/types/inventory';
 import { formatDateIndo, formatRupiah, formatWhatsAppPhone } from '@/lib/format';
 import { SCHEDULE_STATUS_CONFIG } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -22,7 +22,6 @@ import {
   Clock,
   MapPin,
   Sparkles,
-  Search,
   Plus,
   Phone,
   MessageCircle,
@@ -46,7 +45,6 @@ import {
   ClipboardCheck,
   Boxes,
   Package,
-  X,
   MoreVertical,
 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -665,192 +663,98 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
       )}
 
       {/* ===================================================================== */}
-      {/* 4. SEARCH & STATUS FILTER BAR                                        */}
+      {/* 4. SEARCH & FILTER BAR                                               */}
       {/* ===================================================================== */}
-      <div className="p-3.5 sm:p-4 rounded-3xl bg-card/90 backdrop-blur-xl border border-border/80 shadow-xs space-y-3 transition-all">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          {/* Search box */}
-          <div className="relative flex-1 max-w-md w-full">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari client, WhatsApp, venue, tema balon..."
-              className="pl-9 pr-8 h-10 rounded-2xl bg-background/60 border-border/80 text-xs focus:ring-2 focus:ring-[#f370a8]/50 transition-all"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs p-1 rounded-full hover:bg-muted transition-colors cursor-pointer"
-                title="Bersihkan pencarian"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Quick Date Chips (Hari Ini & Besok) & Status Filter */}
-          <div className="flex flex-wrap items-center gap-2 justify-between lg:justify-end">
-            {/* Quick Day Chips */}
-            <div className="flex items-center gap-1 bg-muted/70 p-1 rounded-2xl border border-border/80">
-              <button
-                type="button"
-                onClick={() => {
-                  setQuickDateFilter('all');
-                  setSelectedCalendarDate(null);
-                }}
-                className={cn(
-                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer',
-                  quickDateFilter === 'all' && !selectedCalendarDate
-                    ? 'bg-card text-foreground shadow-xs scale-102'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                Semua
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setQuickDateFilter((prev) => (prev === 'today' ? 'all' : 'today'));
-                  setSelectedCalendarDate(null);
-                }}
-                className={cn(
-                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5',
-                  quickDateFilter === 'today'
-                    ? 'bg-[#f370a8] text-white shadow-md shadow-[#f370a8]/25 scale-102'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <span>Hari Ini</span>
-                {stats.today > 0 && (
-                  <span
-                    className={cn(
-                      'text-[9px] px-1.5 py-0.2 rounded-full font-mono font-black',
-                      quickDateFilter === 'today' ? 'bg-white/25 text-white' : 'bg-[#f370a8]/20 text-[#f370a8]'
-                    )}
-                  >
-                    {stats.today}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setQuickDateFilter((prev) => (prev === 'tomorrow' ? 'all' : 'tomorrow'));
-                  setSelectedCalendarDate(null);
-                }}
-                className={cn(
-                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5',
-                  quickDateFilter === 'tomorrow'
-                    ? 'bg-[#4d3085] text-white shadow-md shadow-[#4d3085]/25 scale-102'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <span>Besok</span>
-                {stats.tomorrow > 0 && (
-                  <span
-                    className={cn(
-                      'text-[9px] px-1.5 py-0.2 rounded-full font-mono font-black',
-                      quickDateFilter === 'tomorrow' ? 'bg-white/25 text-white' : 'bg-[#4d3085]/20 text-[#4d3085] dark:text-[#c4b5fd]'
-                    )}
-                  >
-                    {stats.tomorrow}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Status filter chips */}
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar text-xs">
-              {[
-                { id: 'all', label: 'Semua Status' },
-                { id: 'scheduled', label: 'Dijadwalkan' },
-                { id: 'ready', label: 'Siap Dekor' },
-                { id: 'in_progress', label: 'Pengerjaan' },
-                { id: 'completed', label: 'Selesai' },
-              ].map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setStatusFilter(s.id)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95',
-                    statusFilter === s.id
-                      ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white shadow-md shadow-[#f370a8]/25 scale-102'
-                      : 'bg-muted/70 text-muted-foreground hover:text-foreground hover:bg-muted'
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Cari client, WhatsApp, venue, tema balon..."
+        searchLabel="Cari jadwal pesanan"
+        filters={[
+          {
+            key: 'date',
+            label: 'Tanggal',
+            value: selectedCalendarDate ? 'all' : quickDateFilter,
+            onChange: (v) => {
+              setQuickDateFilter(v as 'all' | 'today' | 'tomorrow');
+              setSelectedCalendarDate(null);
+            },
+            options: [
+              { value: 'all', label: 'Semua Tanggal' },
+              { value: 'today', label: `Hari Ini${stats.today > 0 ? ` (${stats.today})` : ''}` },
+              { value: 'tomorrow', label: `Besok${stats.tomorrow > 0 ? ` (${stats.tomorrow})` : ''}` },
+            ],
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { value: 'all', label: 'Semua Status' },
+              { value: 'scheduled', label: 'Dijadwalkan' },
+              { value: 'ready', label: 'Siap Dekor' },
+              { value: 'in_progress', label: 'Pengerjaan' },
+              { value: 'completed', label: 'Selesai' },
+            ],
+          },
+          {
+            key: 'props',
+            label: 'Properti',
+            value: propertyPrepFilter,
+            onChange: (v) => setPropertyPrepFilter(v as typeof propertyPrepFilter),
+            options: [
+              { value: 'all', label: 'Semua Properti' },
+              { value: 'needs_prep', label: 'Belum Siap' },
+              { value: 'has_props', label: 'Disiapkan' },
+              { value: 'packed', label: 'Siap Berangkat' },
+            ],
+          },
+        ]}
+        onReset={() => {
+          setSearch('');
+          setStatusFilter('all');
+          setQuickDateFilter('all');
+          setPropertyPrepFilter('all');
+          setSelectedCalendarDate(null);
+        }}
+        resultLabel={`${filteredList.length} jadwal`}
+        actions={
+          <>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleCopyScheduleText}
-              className="h-10 px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
-              title="Salin ringkasan agenda ke clipboard untuk dibagikan ke WhatsApp grup crew"
+              aria-label="Salin rekap agenda untuk WhatsApp grup crew"
+              className="h-11 lg:h-10 px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               {copiedSchedule ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-[#f370a8]" />
-                  <span className="text-[#f370a8] font-bold">Tersalin!</span>
+                  <Check className="w-4 h-4 text-[#f370a8]" />
+                  <span className="text-[#f370a8]">Tersalin!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
-                  <span className="hidden sm:inline">Salin Rekap WA</span>
-                  <span className="sm:hidden">Rekap WA</span>
+                  <Copy className="w-4 h-4 text-[#4d3085] dark:text-[#c4b5fd]" />
+                  <span>Rekap WA</span>
                 </>
               )}
             </Button>
-
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleExportScheduleCSV}
-              className="h-10 px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
-              title="Ekspor seluruh daftar jadwal dekorasi ke file Excel / CSV"
+              aria-label="Ekspor jadwal ke Excel / CSV"
+              className="h-11 lg:h-10 px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
+              <FileSpreadsheet className="w-4 h-4 text-[#4d3085] dark:text-[#c4b5fd]" />
               <span className="hidden sm:inline">Excel/CSV</span>
-              <span className="sm:hidden">CSV</span>
             </Button>
-          </div>
-        </div>
-
-        {/* Sub-Filters Kesiapan Properti & Balon */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs pt-2.5 border-t border-border/70">
-          <span className="font-bold text-muted-foreground shrink-0 mr-1 flex items-center gap-1 text-[11px]">
-            <Boxes className="w-3.5 h-3.5 text-[#f370a8]" />
-            <span>Properti:</span>
-          </span>
-          {[
-            { id: 'all', label: 'Semua' },
-            { id: 'needs_prep', label: '⚠️ Belum Siap (0)' },
-            { id: 'has_props', label: '📦 Disiapkan' },
-            { id: 'packed', label: '✨ Siap Berangkat' },
-          ].map((pf) => (
-            <button
-              key={pf.id}
-              type="button"
-              onClick={() => setPropertyPrepFilter(pf.id as any)}
-              className={cn(
-                'px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border',
-                propertyPrepFilter === pf.id
-                  ? 'bg-[#4d3085] text-white border-[#4d3085] shadow-xs'
-                  : 'bg-card/80 text-muted-foreground border-border hover:text-foreground'
-              )}
-            >
-              {pf.label}
-            </button>
-          ))}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* ===================================================================== */}
       {/* 5. MAIN CONTENT: MODE KARTU ATAU MODE TABEL SEBULAN                  */}

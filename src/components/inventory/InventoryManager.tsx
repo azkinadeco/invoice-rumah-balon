@@ -1,5 +1,6 @@
 'use client';
 
+import { FilterBar } from '@/components/common/FilterBar';
 import React, { useState, useMemo } from 'react';
 import {
   InventoryItem,
@@ -14,7 +15,6 @@ import {
 } from '@/types/inventory';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -28,19 +28,16 @@ import {
   Boxes,
   Package,
   Plus,
-  Search,
   Edit,
   Trash2,
   FileSpreadsheet,
   AlertTriangle,
   CheckCircle2,
   MapPin,
-  Sparkles,
   RefreshCw,
   Minus,
   Download,
   Upload,
-  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InventoryItemModal } from './InventoryItemModal';
@@ -386,238 +383,94 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
         </div>
       )}
 
-      {/* 2. Control Toolbar & Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 p-3.5 sm:p-4 bg-card/90 backdrop-blur-xl rounded-3xl border border-border/80 shadow-xs transition-all">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md w-full">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama barang, rak, lokasi, atau catatan..."
-            aria-label="Cari barang inventaris dan stok balon"
-            className="pl-10 pr-9 h-11 text-xs rounded-2xl border-border/80 bg-background/60 font-medium placeholder:text-muted-foreground text-foreground focus:ring-2 focus:ring-[#f370a8]/50 transition-all"
-          />
-          {search && (
-            <button
+      {/* 2. Search & Filters */}
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Cari nama barang, rak, lokasi, atau catatan..."
+        searchLabel="Cari barang inventaris dan stok balon"
+        filters={[
+          {
+            key: 'category',
+            label: 'Kategori',
+            value: selectedCategory,
+            onChange: setSelectedCategory,
+            options: [
+              { value: 'all', label: `Semua Kategori (${items.length})` },
+              ...INVENTORY_CATEGORIES.map((cat) => ({
+                value: cat.id,
+                label: `${cat.label} (${items.filter((it) => it.category === cat.id).length})`,
+              })),
+            ],
+          },
+          {
+            key: 'condition',
+            label: 'Kondisi',
+            value: conditionFilter,
+            onChange: setConditionFilter,
+            options: [
+              { value: 'all', label: 'Semua Kondisi' },
+              { value: 'low_stock', label: 'Perlu Restock' },
+              { value: 'baik', label: 'Siap Pakai' },
+            ],
+          },
+          {
+            key: 'balloonType',
+            label: 'Tipe Balon',
+            value: balloonTypeFilter,
+            onChange: setBalloonTypeFilter,
+            hidden: selectedCategory !== 'balon' && balloonTypeFilter === 'all',
+            options: [
+              { value: 'all', label: 'Semua Tipe' },
+              ...BALLOON_TYPES.map((t) => ({
+                value: t.id,
+                label: `${t.label} (${items.filter((it) => it.category === 'balon' && resolveItemBalloonType(it) === t.id).length})`,
+              })),
+            ],
+          },
+          {
+            key: 'balloonSize',
+            label: 'Ukuran Balon',
+            value: balloonSizeFilter,
+            onChange: setBalloonSizeFilter,
+            hidden: selectedCategory !== 'balon' && balloonSizeFilter === 'all',
+            options: [
+              { value: 'all', label: 'Semua Ukuran' },
+              ...BALLOON_SIZES.map((s) => ({
+                value: s.id,
+                label: `${s.inch}" (${items.filter((it) => it.category === 'balon' && resolveItemBalloonSize(it) === s.id).length})`,
+              })),
+            ],
+          },
+        ]}
+        onReset={handleResetFilters}
+        resultLabel={`${filteredItems.length} barang`}
+        actions={
+          <>
+            <Button
               type="button"
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground text-xs p-1 rounded-full hover:bg-muted transition-colors cursor-pointer"
-              title="Bersihkan pencarian"
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              aria-label="Ekspor daftar stok ke Excel / CSV"
+              className="h-11 lg:h-10 text-xs px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-foreground font-bold active:scale-95 cursor-pointer"
             >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Category & Condition Filters */}
-        <div className="flex flex-wrap items-center gap-2 justify-between lg:justify-end">
-          {/* Quick Condition Selector */}
-          <div className="flex items-center bg-muted/70 p-1 rounded-2xl border border-border/80">
-            {[
-              { id: 'all', label: 'Semua Kondisi' },
-              { id: 'low_stock', label: '⚠️ Perlu Restock' },
-              { id: 'baik', label: 'Siap Pakai' },
-            ].map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setConditionFilter(c.id)}
-                className={cn(
-                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer',
-                  conditionFilter === c.id
-                    ? 'bg-card text-foreground shadow-xs scale-102'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Export CSV */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleExportCSV}
-            className="h-10 text-xs px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-foreground font-bold transition-all hover:scale-105 active:scale-95 shadow-2xs"
-            title="Ekspor daftar stok ke file Excel / CSV"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5 text-[#4d3085] dark:text-[#c4b5fd]" />
-            <span>Ekspor CSV</span>
-          </Button>
-
-          {/* Tambah Barang CTA */}
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleAddNewItem}
-            className="h-10 px-4 text-xs rounded-2xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-extrabold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tambah Barang</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* 3. Category Filter Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-        <button
-          type="button"
-          onClick={() => setSelectedCategory('all')}
-          className={cn(
-            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer active:scale-95',
-            selectedCategory === 'all'
-              ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-md shadow-[#f370a8]/25 scale-102'
-              : 'bg-card/80 hover:bg-muted text-muted-foreground hover:text-foreground border-border'
-          )}
-        >
-          Semua Kategori ({items.length})
-        </button>
-
-        {INVENTORY_CATEGORIES.map((cat) => {
-          const isSelected = selectedCategory === cat.id;
-          const count = items.filter((it) => it.category === cat.id).length;
-          return (
-            <button
-              key={cat.id}
+              <FileSpreadsheet className="w-4 h-4 text-[#4d3085] dark:text-[#c4b5fd]" />
+              <span className="hidden sm:inline ml-1.5">Ekspor CSV</span>
+            </Button>
+            <Button
               type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={cn(
-                'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer flex items-center gap-1.5 active:scale-95',
-                isSelected
-                  ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-md shadow-[#f370a8]/25 scale-102'
-                  : 'bg-card/80 hover:bg-muted text-muted-foreground hover:text-foreground border-border'
-              )}
+              size="sm"
+              onClick={handleAddNewItem}
+              className="h-11 lg:h-10 px-4 text-xs rounded-2xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-extrabold shadow-md shadow-[#f370a8]/20 active:scale-95 flex items-center gap-1.5 cursor-pointer"
             >
-              <span>{cat.label}</span>
-              <span
-                className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black',
-                  isSelected ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Sub-Filters Khusus Kategori Balon: Tipe (Retro, Doff, Chrome, Metalik, Pastel) & Ukuran (5", 12", 18", 36") */}
-      {(selectedCategory === 'balon' || balloonTypeFilter !== 'all' || balloonSizeFilter !== 'all') && (
-        <div className="p-3.5 sm:p-4 rounded-3xl bg-gradient-to-r from-pink-500/10 via-purple-500/5 to-card border border-pink-500/25 space-y-3 shadow-xs animate-in fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#f370a8]" />
-              <span className="text-xs font-black uppercase tracking-wider text-foreground">
-                Kategori Spesifik Balon
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f370a8]/20 text-[#be185d] dark:text-[#f472b6]">
-                Retro • Doff • Chrome • Metalik • Pastel & Ukuran 5&quot;, 12&quot;, 18&quot;, 36&quot;
-              </span>
-            </div>
-
-            {(balloonTypeFilter !== 'all' || balloonSizeFilter !== 'all') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setBalloonTypeFilter('all');
-                  setBalloonSizeFilter('all');
-                }}
-                className="text-[11px] font-bold text-[#f370a8] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>Reset Filter Balon ✕</span>
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-            {/* Filter 1: Tipe / Tekstur Balon */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-[11px] font-bold text-muted-foreground shrink-0 mr-1">Tipe Balon:</span>
-              <button
-                type="button"
-                onClick={() => setBalloonTypeFilter('all')}
-                className={cn(
-                  'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer whitespace-nowrap',
-                  balloonTypeFilter === 'all'
-                    ? 'bg-[#4d3085] text-white border-[#4d3085] shadow-xs'
-                    : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                )}
-              >
-                Semua Tipe
-              </button>
-              {BALLOON_TYPES.map((t) => {
-                const isSel = balloonTypeFilter === t.id;
-                const count = items.filter(
-                  (it) => it.category === 'balon' && resolveItemBalloonType(it) === t.id
-                ).length;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setBalloonTypeFilter(t.id)}
-                    className={cn(
-                      'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap',
-                      isSel
-                        ? `${t.badge} ring-2 ring-foreground/20 font-black shadow-xs`
-                        : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                    )}
-                  >
-                    <span className={cn('w-2 h-2 rounded-full', t.dotColor)} />
-                    <span>{t.label}</span>
-                    <span className="text-[10px] opacity-75 font-mono">({count})</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="hidden lg:block w-px h-6 bg-border mx-1" />
-
-            {/* Filter 2: Ukuran Balon */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-[11px] font-bold text-muted-foreground shrink-0 mr-1">Ukuran:</span>
-              <button
-                type="button"
-                onClick={() => setBalloonSizeFilter('all')}
-                className={cn(
-                  'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer whitespace-nowrap',
-                  balloonSizeFilter === 'all'
-                    ? 'bg-[#f370a8] text-white border-[#f370a8] shadow-xs'
-                    : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                )}
-              >
-                Semua Ukuran
-              </button>
-              {BALLOON_SIZES.map((s) => {
-                const isSel = balloonSizeFilter === s.id;
-                const count = items.filter(
-                  (it) => it.category === 'balon' && resolveItemBalloonSize(it) === s.id
-                ).length;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setBalloonSizeFilter(s.id)}
-                    className={cn(
-                      'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap',
-                      isSel
-                        ? `${s.badge} ring-2 ring-foreground/20 font-black shadow-xs`
-                        : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                    )}
-                  >
-                    <span>{s.inch}&quot;</span>
-                    <span className="text-[10px] opacity-70">({s.label.split(' ')[1] || ''})</span>
-                    <span className="text-[10px] opacity-75 font-mono">({count})</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+              <Plus className="w-4 h-4" />
+              <span>Tambah</span>
+              <span className="hidden sm:inline">Barang</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* 4a. Mobile Stock Card List (sm:hidden) */}
       <div className="sm:hidden space-y-3">

@@ -55,104 +55,36 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
 
   if (!invoice) return null;
 
-  // Unified canvas capture for both PDF and PNG with lab/oklch color conversion protection
+  // Unified canvas capture for both PDF and PNG.
+  // html-to-image rasterizes with the browser's own layout engine, so custom fonts and flex
+  // alignment match the preview exactly (html2canvas drew text at the wrong baseline).
   const captureInvoiceCanvas = async (): Promise<HTMLCanvasElement | null> => {
     const element = document.getElementById('invoice-preview-capture');
     if (!element) return null;
 
-    const { default: html2canvas } = await import('html2canvas');
-
-    const testCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
-    const testCtx = testCanvas?.getContext('2d');
-    const convertColor = (val: string): string => {
-      if (!val || typeof val !== 'string') return val;
-      if (!val.includes('lab(') && !val.includes('oklch(') && !val.includes('color(')) return val;
-      if (testCtx) {
-        try {
-          testCtx.fillStyle = '#000000';
-          testCtx.fillStyle = val;
-          return testCtx.fillStyle;
-        } catch {
-          return 'rgba(0,0,0,0)';
-        }
-      }
-      return 'rgba(0,0,0,0)';
-    };
-
-    const origGetComputedStyle = window.getComputedStyle;
-    window.getComputedStyle = function (elt: Element, pseudoElt?: string | null) {
-      const style = origGetComputedStyle.call(window, elt, pseudoElt);
-      return new Proxy(style, {
-        get(target, prop: string | symbol) {
-          const val = typeof prop === 'string' ? (target as any)[prop] : undefined;
-          if (typeof val === 'string' && (val.includes('lab(') || val.includes('oklch(') || val.includes('color('))) {
-            return convertColor(val);
-          }
-          if (typeof val === 'function') {
-            if (prop === 'getPropertyValue') {
-              return (p: string) => {
-                const res = target.getPropertyValue(p);
-                return typeof res === 'string' && (res.includes('lab(') || res.includes('oklch(') || res.includes('color('))
-                  ? convertColor(res)
-                  : res;
-              };
-            }
-            return val.bind(target);
-          }
-          return val;
-        },
-      });
-    };
-
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
+      const { toCanvas } = await import('html-to-image');
+
+      // Custom fonts must be ready before rasterizing
+      await Promise.all(
+        ['DOSans', 'Lepetitcochon', 'Lazydog'].map((f) => document.fonts.load(`16px "${f}"`).catch(() => []))
+      );
+      await document.fonts.ready;
+
+      const options = {
+        pixelRatio: 2.5,
         backgroundColor: '#fff9f5',
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc) => {
-          clonedDoc.documentElement.classList.remove('dark');
-          clonedDoc.body.classList.remove('dark');
-
-          const win = clonedDoc.defaultView;
-          if (win) {
-            const origGCS = win.getComputedStyle;
-            win.getComputedStyle = function (elt: Element, pseudoElt?: string | null) {
-              const s = origGCS.call(win, elt, pseudoElt);
-              return new Proxy(s, {
-                get(t, p) {
-                  const v = typeof p === 'string' ? (t as any)[p] : undefined;
-                  if (typeof v === 'string' && (v.includes('lab(') || v.includes('oklch(') || v.includes('color('))) {
-                    return convertColor(v);
-                  }
-                  if (typeof v === 'function') {
-                    if (p === 'getPropertyValue') {
-                      return (propName: string) => {
-                        const val = t.getPropertyValue(propName);
-                        return typeof val === 'string' && (val.includes('lab(') || val.includes('oklch(') || val.includes('color('))
-                          ? convertColor(val)
-                          : val;
-                      };
-                    }
-                    return v.bind(t);
-                  }
-                  return v;
-                },
-              });
-            };
-          }
-        },
-      });
-
-      return canvas;
+        width: 560,
+        height: 794,
+        // Preview zoom is a CSS transform on a wrapper; render the paper itself at 100%
+        style: { transform: 'none', boxShadow: 'none', margin: '0' },
+      };
+      // First pass warms up font/image inlining (Safari renders blanks otherwise)
+      await toCanvas(element, options);
+      return await toCanvas(element, options);
     } catch (err) {
-      console.error('html2canvas capture error:', err);
+      console.error('Invoice capture error:', err);
       return null;
-    } finally {
-      window.getComputedStyle = origGetComputedStyle;
     }
   };
 

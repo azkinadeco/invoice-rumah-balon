@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { InvoiceData } from '@/types/invoice';
 import { formatRupiah, formatDateIndo } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -135,14 +134,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
             {/* Meta details with orange balloon illustration */}
             <div className={cn("flex items-start gap-2.5", isTierUltra ? "mt-1" : isTierSuperCompact ? "mt-1.5" : "mt-2.5")}>
               <div className={cn("relative w-8 shrink-0", balloonHeight, isTierUltra ? "mt-0.5" : "mt-2.5")}>
-                <Image
-                  src="/images/balloon_single.png"
-                  alt="Balloon"
-                  fill
-                  sizes="32px"
-                  className="object-contain object-top"
-                  priority
-                />
+                {/* Plain <img>: html-to-image caches next/image URLs by path, which mixed up the pictures */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/balloon_single.png" alt="Balloon" className="absolute inset-0 w-full h-full object-contain object-top" />
               </div>
 
               <div className={cn("space-y-0.5 font-medium text-[#2a2e30] flex-1", isTierUltra ? "text-[8.5px] leading-[1.35]" : "text-[9.5px] leading-[1.45]")}>
@@ -359,14 +353,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
 
             {/* Colorful Balloon Bunch Graphic */}
             <div className="relative w-16 h-20 shrink-0">
-              <Image
-                src="/images/balloon_bunch.png"
-                alt="Balloons"
-                fill
-                sizes="64px"
-                className="object-contain object-bottom"
-                priority
-              />
+              {/* Plain <img>: html-to-image caches next/image URLs by path, which mixed up the pictures */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/balloon_bunch.png" alt="Balloons" className="absolute inset-0 w-full h-full object-contain object-bottom" />
             </div>
           </div>
         </div>
@@ -376,14 +365,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
           {/* Top Logo */}
           <div className="flex justify-center pt-1">
             <div className="relative w-[148px] h-[54px]">
-              <Image
-                src="/images/logo.png"
-                alt="Rumah Balon"
-                fill
-                sizes="148px"
-                className="object-contain"
-                priority
-              />
+              {/* Plain <img>: html-to-image caches next/image URLs by path, which mixed up the pictures */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/logo.png" alt="Rumah Balon" className="absolute inset-0 w-full h-full object-contain" />
             </div>
           </div>
 
