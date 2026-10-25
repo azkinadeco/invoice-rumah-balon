@@ -158,3 +158,11 @@ export async function compressImageFile(file: File, maxDim = 400, quality = 0.85
     reader.readAsDataURL(file);
   });
 }
+
+/** Returns an error message when setup time is unusable, else null. Times are "HH:MM". */
+export function validateSetupTime(setupTime?: string, eventTime?: string): string | null {
+  if (!setupTime) return null;
+  if (setupTime === '00:00') return 'Jam setup 00:00 (tengah malam) kemungkinan salah. Mohon isi jam setup yang benar.';
+  if (eventTime && setupTime > eventTime) return 'Jam setup harus lebih awal dari jam mulai acara.';
+  return null;
+}

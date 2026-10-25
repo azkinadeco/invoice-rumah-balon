@@ -500,20 +500,20 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
       {/* ===================================================================== */}
       {/* 1. TOP HEADER CONTROLS (Ringkas, Ringan, Bisa Buka/Tutup)            */}
       {/* ===================================================================== */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 p-4 sm:p-5 rounded-3xl bg-card border border-border shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 p-4 sm:p-5 rounded-3xl bg-card/90 backdrop-blur-xl border border-border/80 shadow-sm transition-all">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="p-1.5 rounded-xl bg-gradient-to-br from-[#f370a8] to-[#4d3085] text-white shadow-xs">
               <CalendarDays className="w-4 h-4" />
             </span>
             <h1 className="text-lg sm:text-xl font-black tracking-tight text-foreground">
               Jadwal Pesanan Client
             </h1>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#f370a8]/15 text-[#f370a8]">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#f370a8]/15 text-[#f370a8] dark:text-[#f472b6] border border-[#f370a8]/30">
               {stats.monthTotal} Acara Bulan {MONTH_NAMES_ID[viewMonth]}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground font-medium">
             Kelola agenda bulanan, jam mulai acara, jam setup balon, dan venue client secara rapi.
           </p>
         </div>
@@ -527,9 +527,9 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
             size="sm"
             onClick={() => setIsCalendarOpen((prev) => !prev)}
             className={cn(
-              'h-9 px-3 rounded-xl border-border text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs',
+              'h-9 px-3.5 rounded-2xl border-border text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer',
               isCalendarOpen
-                ? 'bg-[#f370a8] text-white border-[#f370a8]'
+                ? 'bg-[#f370a8] text-white border-[#f370a8] shadow-md shadow-[#f370a8]/25'
                 : 'bg-card hover:bg-muted text-foreground'
             )}
           >
@@ -543,14 +543,14 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
           </Button>
 
           {/* Mode Switcher: Mode Kartu vs Mode Tabel Sebulan */}
-          <div className="flex items-center bg-muted/60 p-0.5 rounded-xl border border-border/80">
+          <div className="flex items-center bg-muted/70 p-1 rounded-2xl border border-border/80">
             <button
               type="button"
               onClick={() => setViewMode('cards')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
                 viewMode === 'cards'
-                  ? 'bg-card text-foreground shadow-xs'
+                  ? 'bg-card text-foreground shadow-xs scale-102'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -562,13 +562,13 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               type="button"
               onClick={() => setViewMode('table')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
                 viewMode === 'table'
-                  ? 'bg-card text-foreground shadow-xs'
+                  ? 'bg-card text-foreground shadow-xs scale-102'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <TableProperties className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#f370a8]" />
+              <TableProperties className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
               <span>Tabel Sebulan</span>
             </button>
           </div>
@@ -578,7 +578,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
             type="button"
             size="sm"
             onClick={onOpenNewInvoice}
-            className="h-9 px-3.5 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 text-xs flex items-center gap-1.5 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+            className="h-9 px-4 rounded-2xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 text-xs flex items-center gap-1.5 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Tambah Pesanan</span>
@@ -667,16 +667,16 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
       {/* ===================================================================== */}
       {/* 4. SEARCH & STATUS FILTER BAR                                        */}
       {/* ===================================================================== */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="p-3.5 sm:p-4 rounded-3xl bg-card/90 backdrop-blur-xl border border-border/80 shadow-xs space-y-3 transition-all">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Search box */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative flex-1 max-w-md w-full">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari client, WhatsApp, venue, tema balon..."
-              className="pl-9 pr-8 h-10 rounded-xl bg-background border-border text-xs"
+              className="pl-9 pr-8 h-10 rounded-2xl bg-background/60 border-border/80 text-xs focus:ring-2 focus:ring-[#f370a8]/50 transition-all"
             />
             {search && (
               <button
@@ -691,9 +691,9 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
           </div>
 
           {/* Quick Date Chips (Hari Ini & Besok) & Status Filter */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 justify-between lg:justify-end">
             {/* Quick Day Chips */}
-            <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-xl border border-border/80">
+            <div className="flex items-center gap-1 bg-muted/70 p-1 rounded-2xl border border-border/80">
               <button
                 type="button"
                 onClick={() => {
@@ -701,9 +701,9 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   setSelectedCalendarDate(null);
                 }}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer',
+                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer',
                   quickDateFilter === 'all' && !selectedCalendarDate
-                    ? 'bg-card text-foreground shadow-xs'
+                    ? 'bg-card text-foreground shadow-xs scale-102'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
@@ -716,9 +716,9 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   setSelectedCalendarDate(null);
                 }}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1',
+                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5',
                   quickDateFilter === 'today'
-                    ? 'bg-[#f370a8] text-white shadow-xs'
+                    ? 'bg-[#f370a8] text-white shadow-md shadow-[#f370a8]/25 scale-102'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
@@ -726,7 +726,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                 {stats.today > 0 && (
                   <span
                     className={cn(
-                      'text-[9px] px-1.5 py-0.2 rounded-full font-mono',
+                      'text-[9px] px-1.5 py-0.2 rounded-full font-mono font-black',
                       quickDateFilter === 'today' ? 'bg-white/25 text-white' : 'bg-[#f370a8]/20 text-[#f370a8]'
                     )}
                   >
@@ -741,9 +741,9 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   setSelectedCalendarDate(null);
                 }}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1',
+                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5',
                   quickDateFilter === 'tomorrow'
-                    ? 'bg-[#4d3085] text-white shadow-xs'
+                    ? 'bg-[#4d3085] text-white shadow-md shadow-[#4d3085]/25 scale-102'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
@@ -751,7 +751,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                 {stats.tomorrow > 0 && (
                   <span
                     className={cn(
-                      'text-[9px] px-1.5 py-0.2 rounded-full font-mono',
+                      'text-[9px] px-1.5 py-0.2 rounded-full font-mono font-black',
                       quickDateFilter === 'tomorrow' ? 'bg-white/25 text-white' : 'bg-[#4d3085]/20 text-[#4d3085] dark:text-[#c4b5fd]'
                     )}
                   >
@@ -762,7 +762,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
             </div>
 
             {/* Status filter chips */}
-            <div className="flex items-center gap-1 overflow-x-auto text-xs">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar text-xs">
               {[
                 { id: 'all', label: 'Semua Status' },
                 { id: 'scheduled', label: 'Dijadwalkan' },
@@ -775,10 +775,10 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   type="button"
                   onClick={() => setStatusFilter(s.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
+                    'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95',
                     statusFilter === s.id
-                      ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white shadow-xs'
-                      : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                      ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white shadow-md shadow-[#f370a8]/25 scale-102'
+                      : 'bg-muted/70 text-muted-foreground hover:text-foreground hover:bg-muted'
                   )}
                 >
                   {s.label}
@@ -791,7 +791,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               variant="outline"
               size="sm"
               onClick={handleCopyScheduleText}
-              className="h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="h-10 px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
               title="Salin ringkasan agenda ke clipboard untuk dibagikan ke WhatsApp grup crew"
             >
               {copiedSchedule ? (
@@ -813,7 +813,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               variant="outline"
               size="sm"
               onClick={handleExportScheduleCSV}
-              className="h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="h-10 px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
               title="Ekspor seluruh daftar jadwal dekorasi ke file Excel / CSV"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
@@ -824,16 +824,16 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
         </div>
 
         {/* Sub-Filters Kesiapan Properti & Balon */}
-        <div className="flex items-center gap-1.5 overflow-x-auto text-xs pt-2.5 border-t border-border/60">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs pt-2.5 border-t border-border/70">
           <span className="font-bold text-muted-foreground shrink-0 mr-1 flex items-center gap-1 text-[11px]">
             <Boxes className="w-3.5 h-3.5 text-[#f370a8]" />
-            <span>Kesiapan Properti:</span>
+            <span>Properti:</span>
           </span>
           {[
-            { id: 'all', label: 'Semua Pesanan' },
-            { id: 'needs_prep', label: '⚠️ Belum Disiapkan (0 Properti)' },
-            { id: 'has_props', label: '📦 Ada Properti Disiapkan' },
-            { id: 'packed', label: '✨ 100% Siap Berangkat' },
+            { id: 'all', label: 'Semua' },
+            { id: 'needs_prep', label: '⚠️ Belum Siap (0)' },
+            { id: 'has_props', label: '📦 Disiapkan' },
+            { id: 'packed', label: '✨ Siap Berangkat' },
           ].map((pf) => (
             <button
               key={pf.id}
@@ -843,7 +843,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                 'px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border',
                 propertyPrepFilter === pf.id
                   ? 'bg-[#4d3085] text-white border-[#4d3085] shadow-xs'
-                  : 'bg-card text-muted-foreground border-border hover:text-foreground'
+                  : 'bg-card/80 text-muted-foreground border-border hover:text-foreground'
               )}
             >
               {pf.label}
@@ -926,20 +926,20 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               <div
                 key={inv.id}
                 className={cn(
-                  'p-4 sm:p-5 rounded-3xl border transition-all duration-200 bg-card hover:shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4',
+                  'p-4 sm:p-5 rounded-3xl border transition-all duration-300 bg-card/90 backdrop-blur-xl hover:shadow-xl hover:-translate-y-0.5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 animate-in fade-in-50',
                   isCancelled
                     ? 'opacity-65 border-dashed border-rose-300 dark:border-rose-900 bg-muted/15'
                     : dateInfo.isToday
-                    ? 'border-[#f370a8] ring-2 ring-[#f370a8]/20 shadow-sm'
+                    ? 'border-[#f370a8] ring-2 ring-[#f370a8]/25 shadow-md shadow-[#f370a8]/10'
                     : dateInfo.isTomorrow
-                    ? 'border-[#4d3085]/40 hover:border-[#4d3085]'
+                    ? 'border-[#4d3085]/40 hover:border-[#4d3085] shadow-sm'
                     : 'border-border/80 hover:border-[#f370a8]/40'
                 )}
               >
                 {/* Main Content Area */}
                 <div className="flex flex-col sm:flex-row items-start gap-3.5 sm:gap-4 flex-1 w-full">
                   {/* Visual Date Badge */}
-                  <div className="flex items-center justify-between sm:justify-center w-full sm:w-20 sm:flex-col rounded-2xl p-2.5 sm:p-2 border shrink-0 shadow-xs bg-muted/50 border-border">
+                  <div className="flex items-center justify-between sm:justify-center w-full sm:w-20 sm:flex-col rounded-2xl p-2.5 sm:p-2.5 border shrink-0 shadow-xs bg-muted/70 border-border/80">
                     <div className="flex sm:flex-col items-center gap-2 sm:gap-0">
                       <span
                         className={cn(
@@ -958,7 +958,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                     </div>
 
                     {dateInfo.isToday && (
-                      <span className="px-2 py-0.5 rounded-full bg-[#f370a8] text-white text-[9px] font-black uppercase tracking-wider sm:mt-1">
+                      <span className="px-2 py-0.5 rounded-full bg-[#f370a8] text-white text-[9px] font-black uppercase tracking-wider sm:mt-1 animate-badge-pulse">
                         Hari Ini
                       </span>
                     )}
@@ -977,12 +977,12 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                         <h3 className="text-base font-extrabold text-foreground tracking-tight">
                           {inv.clientName || '(Tanpa Nama)'}
                         </h3>
-                        <span className="text-xs font-mono font-medium text-muted-foreground">
+                        <span className="text-xs font-mono font-medium text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-lg border border-border">
                           #{inv.invoiceNumber}
                         </span>
                         {inv.status === 'cancelled' ? (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-                            Pesanan Batal ✕
+                            Batal ✕
                           </span>
                         ) : inv.status === 'paid' ? (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -990,51 +990,49 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                           </span>
                         ) : (inv.status === 'dp_paid' || (inv.dpPaidAmount && inv.dpPaidAmount > 0)) ? (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-950/60 text-pink-600 dark:text-pink-300 border border-pink-200 dark:border-pink-800">
-                            DP: {formatRupiah(inv.dpPaidAmount || Math.round(inv.total * 0.3))} • Sisa {formatRupiah(inv.remainingAmount ?? Math.max(0, inv.total - (inv.dpPaidAmount || Math.round(inv.total * 0.3))))}
+                            DP Masuk
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                            Total {formatRupiah(inv.total)}
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                            Belum DP
                           </span>
                         )}
                       </div>
 
-                      <select
-                        value={inv.scheduleStatus || 'scheduled'}
-                        onChange={(e) => handleQuickChangeStatus(inv, e.target.value as ScheduleStatus)}
-                        className={cn(
-                          'px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 outline-none cursor-pointer transition-all',
-                          statusConfig.badge
-                        )}
-                        title="Klik untuk langsung mengubah status pengerjaan acara"
-                      >
-                        <option value="scheduled" className="bg-card text-foreground">Dijadwalkan</option>
-                        <option value="ready" className="bg-card text-foreground">Siap Dekor</option>
-                        <option value="in_progress" className="bg-card text-foreground">Pengerjaan</option>
-                        <option value="completed" className="bg-card text-foreground">Selesai</option>
-                      </select>
+                      <div className="relative inline-block shrink-0">
+                        <select
+                          value={inv.scheduleStatus || 'scheduled'}
+                          onChange={(e) => handleQuickChangeStatus(inv, e.target.value as ScheduleStatus)}
+                          className={cn(
+                            'appearance-none pl-3 pr-6 py-1 rounded-full text-xs font-bold border outline-none cursor-pointer transition-all hover:brightness-105 shadow-2xs',
+                            statusConfig.badge
+                          )}
+                          title="Klik untuk langsung mengubah status pengerjaan acara"
+                        >
+                          <option value="scheduled" className="bg-card text-foreground">Dijadwalkan</option>
+                          <option value="ready" className="bg-card text-foreground">Siap Dekor</option>
+                          <option value="in_progress" className="bg-card text-foreground">Pengerjaan</option>
+                          <option value="completed" className="bg-card text-foreground">Selesai</option>
+                        </select>
+                        <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-60" />
+                      </div>
                     </div>
 
                     {/* Time, Setup, and Venue chips */}
                     <div className="flex flex-wrap items-center gap-2 text-xs">
-                      {/* Jam Acara */}
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-background border border-border font-mono font-bold text-foreground">
+                      {/* Jam Acara & Setup */}
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-background/80 border border-border font-mono font-bold text-foreground">
                         <Clock className="w-3.5 h-3.5 text-[#f370a8]" />
                         <span>
                           Acara: {inv.eventTime || '14:00'}
                           {inv.eventEndTime ? ` - ${inv.eventEndTime}` : ''}
+                          {inv.setupTime && inv.setupTime !== '00:00' ? ` (Setup: ${inv.setupTime})` : ''}
                         </span>
-                      </div>
-
-                      {/* Jam Setup Loading */}
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#4d3085]/10 dark:bg-[#4d3085]/25 border border-[#4d3085]/20 font-mono font-bold text-[#4d3085] dark:text-[#c4b5fd]">
-                        <Sparkles className="w-3.5 h-3.5 text-[#f370a8]" />
-                        <span>Setup Balon: {inv.setupTime || '11:00'}</span>
                       </div>
 
                       {/* Lokasi / Venue */}
                       {(inv.venue || inv.clientAddress) && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-muted/60 text-muted-foreground max-w-full sm:max-w-xs truncate">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-muted/70 text-foreground font-medium max-w-full sm:max-w-xs truncate border border-border/60">
                           <MapPin className="w-3.5 h-3.5 text-[#f370a8] shrink-0" />
                           <span className="truncate">{inv.venue || inv.clientAddress}</span>
                         </div>
@@ -1042,7 +1040,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
 
                       {/* Crew Bertugas */}
                       {inv.assignedCrew && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#4d3085]/10 dark:bg-[#4d3085]/20 text-[#4d3085] dark:text-[#c4b5fd] border border-[#4d3085]/20 font-bold">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#4d3085]/15 dark:bg-[#4d3085]/25 text-[#4d3085] dark:text-[#c4b5fd] border border-[#4d3085]/30 font-bold">
                           <Users className="w-3.5 h-3.5 text-[#f370a8] shrink-0" />
                           <span>Crew: {inv.assignedCrew}</span>
                         </div>
@@ -1053,17 +1051,17 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                     {inv.themeNote && (
                       <p className="text-xs text-muted-foreground line-clamp-1 flex items-center gap-1.5">
                         <PartyPopper className="w-3.5 h-3.5 text-[#f370a8] shrink-0" />
-                        <span className="font-medium text-foreground">{inv.themeNote}</span>
+                        <span className="font-semibold text-foreground">{inv.themeNote}</span>
                       </p>
                     )}
 
                     {/* Crew Note if exists */}
                     {inv.crewNote && (
-                      <div className="p-2.5 rounded-xl bg-muted/40 border border-border/70 text-[11px] text-muted-foreground">
+                      <div className="p-2.5 rounded-xl bg-muted/70 border border-border/80 text-xs text-foreground font-medium">
                         <span className="font-bold text-[#4d3085] dark:text-[#c4b5fd]">
                           Catatan Crew:{' '}
                         </span>
-                        {inv.crewNote}
+                        <span>{inv.crewNote}</span>
                       </div>
                     )}
 
@@ -1075,59 +1073,36 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                           setCrewSheetInvoice(inv);
                           setCrewSheetOpen(true);
                         }}
-                        className="p-2.5 rounded-2xl bg-gradient-to-r from-pink-500/10 via-[#4d3085]/5 to-card border border-pink-500/25 hover:border-pink-500/40 transition-all cursor-pointer group/prop space-y-1.5 shadow-2xs"
+                        className="py-1.5 px-3 rounded-xl bg-muted/50 hover:bg-muted border border-border transition-all cursor-pointer flex items-center justify-between text-xs group/prop"
                         title="Klik untuk membuka kelola kebutuhan properti & stok balon pesanan ini"
                       >
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1.5 font-bold text-foreground group-hover/prop:text-[#f370a8] transition-colors">
-                            <Boxes className="w-3.5 h-3.5 text-[#f370a8]" />
-                            <span>Kebutuhan Properti & Balon ({inv.dispatchedProperties.length} item)</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {inv.dispatchedProperties.every((p) => p.checkedIn) ? (
-                              <span className="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400">
-                                ✨ Bongkaran Selesai
-                              </span>
-                            ) : inv.dispatchedProperties.every((p) => p.checkedOut) ? (
-                              <span className="px-2 py-0.5 rounded-full text-[9.5px] font-black bg-[#4d3085]/15 text-[#4d3085] dark:text-[#c4b5fd]">
-                                🚀 100% Siap Berangkat
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-muted text-muted-foreground border border-border">
-                                📦 {inv.dispatchedProperties.filter((p) => p.checkedOut).length}/{inv.dispatchedProperties.length} Dipacking
-                              </span>
-                            )}
-                            <span className="text-[10px] font-extrabold text-[#4d3085] dark:text-[#c4b5fd] group-hover/prop:underline">
-                              Kelola →
-                            </span>
-                          </div>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Boxes className="w-3.5 h-3.5 text-[#f370a8] shrink-0" />
+                          <span className="font-semibold text-foreground shrink-0">
+                            Properti ({inv.dispatchedProperties.length} item)
+                          </span>
+                          <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">
+                            • {inv.dispatchedProperties.slice(0, 3).map((p) => `${p.quantity}x ${p.name}`).join(', ')}
+                            {inv.dispatchedProperties.length > 3 ? ` (+${inv.dispatchedProperties.length - 3} lainnya)` : ''}
+                          </span>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-1">
-                          {inv.dispatchedProperties.slice(0, 4).map((p) => (
-                            <span
-                              key={p.id}
-                              className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-card border border-border flex items-center gap-1 shadow-2xs"
-                            >
-                              <span className="font-bold text-foreground">{p.quantity}x</span>
-                              <span className="truncate max-w-[120px]">{p.name}</span>
-                              {p.balloonType && (
-                                <span className="text-[8px] font-black uppercase px-1 rounded bg-amber-100 text-amber-800">
-                                  {String(p.balloonType)}
-                                </span>
-                              )}
-                              {p.balloonSize && (
-                                <span className="text-[8px] font-black px-1 rounded bg-indigo-100 text-indigo-800">
-                                  {String(p.balloonSize).replace('_inch', '"')}
-                                </span>
-                              )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {inv.dispatchedProperties.every((p) => p.checkedIn) ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400">
+                              ✨ Bongkar Selesai
                             </span>
-                          ))}
-                          {inv.dispatchedProperties.length > 4 && (
-                            <span className="text-[10px] font-bold text-muted-foreground px-1.5">
-                              +{inv.dispatchedProperties.length - 4} barang lainnya
+                          ) : inv.dispatchedProperties.every((p) => p.checkedOut) ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#4d3085]/15 text-[#4d3085] dark:text-[#c4b5fd]">
+                              🚀 Siap Berangkat
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-card text-muted-foreground border border-border">
+                              📦 {inv.dispatchedProperties.filter((p) => p.checkedOut).length}/{inv.dispatchedProperties.length} Dipacking
                             </span>
                           )}
+                          <span className="text-[11px] font-bold text-[#4d3085] dark:text-[#c4b5fd] group-hover/prop:underline">
+                            Kelola →
+                          </span>
                         </div>
                       </div>
                     ) : (
@@ -1137,15 +1112,15 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                           setCrewSheetInvoice(inv);
                           setCrewSheetOpen(true);
                         }}
-                        className="px-3 py-1.5 rounded-xl border border-dashed border-[#4d3085]/30 hover:border-[#f370a8] hover:bg-[#f370a8]/5 transition-all cursor-pointer flex items-center justify-between text-xs text-muted-foreground hover:text-foreground"
+                        className="py-1.5 px-3 rounded-xl border border-dashed border-border/80 hover:border-[#f370a8] hover:bg-[#f370a8]/5 transition-all cursor-pointer flex items-center justify-between text-xs text-muted-foreground hover:text-foreground"
                         title="Klik untuk memilih properti dan stok balon yang wajib dibawa crew"
                       >
-                        <span className="flex items-center gap-1.5 text-[11px]">
+                        <span className="flex items-center gap-1.5 text-xs">
                           <Boxes className="w-3.5 h-3.5 text-[#f370a8]" />
-                          <span>Belum ada properti / balon gudang yang dicatat untuk pesanan ini</span>
+                          <span>Belum ada properti / balon gudang yang dicatat</span>
                         </span>
-                        <span className="text-[10px] font-bold text-[#4d3085] dark:text-[#c4b5fd] underline">
-                          + Siapkan Properti & Balon
+                        <span className="text-xs font-bold text-[#4d3085] dark:text-[#c4b5fd] underline">
+                          + Siapkan Properti
                         </span>
                       </div>
                     )}
@@ -1154,41 +1129,38 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                     {(inv.bookingDate === todayStr || inv.bookingDate === tomorrowStr) &&
                       inv.status !== 'paid' &&
                       (inv.remainingAmount ?? (inv.total - (inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round(inv.total * 0.3) : 0)))) > 0 && (
-                      <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex flex-wrap items-center justify-between gap-2 text-[11px] text-rose-600 dark:text-rose-400 font-semibold">
+                      <div className="py-1.5 px-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-between gap-2 text-xs text-rose-600 dark:text-rose-400 font-semibold">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                           <span>
-                            Pelunasan H-1 belum tuntas: <strong>{formatRupiah(inv.remainingAmount ?? Math.max(0, inv.total - (inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round(inv.total * 0.3) : 0))))}</strong>
+                            Pelunasan H-1 belum tuntas: <strong className="font-mono">{formatRupiah(inv.remainingAmount ?? Math.max(0, inv.total - (inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round(inv.total * 0.3) : 0))))}</strong>
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <a
-                            href={generatePaymentReminderMessage(inv)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[10px] bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                            title="Kirim pesan tagihan sisa pelunasan ke WhatsApp client"
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                            <span>Tagih via WA 💬</span>
-                          </a>
-                        </div>
+                        <a
+                          href={generatePaymentReminderMessage(inv)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-600 active:scale-95 transition-all"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          Tagih via WA
+                        </a>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Right / Bottom Action Buttons (Streamlined 2 Primary CTAs + Popover Menu) */}
-                <div className="flex items-center gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-border/80 w-full lg:w-auto justify-end flex-wrap">
+                {/* Right / Bottom Actions: fixed grid so every card lines up */}
+                <div className="grid grid-cols-2 gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-border/80 w-full lg:w-44 shrink-0 lg:self-center">
                   {/* Primary CTA 1: WhatsApp Confirmation */}
                   <a
                     href={generateWhatsAppMessage(inv)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 sm:flex-none h-9 px-3 rounded-xl bg-[#4d3085]/10 hover:bg-[#4d3085]/20 text-[#4d3085] dark:text-[#c4b5fd] font-bold text-xs flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+                    className="lg:col-span-2 h-11 lg:h-9 px-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs"
                     title="Kirim konfirmasi jam ke WhatsApp client"
                   >
-                    <MessageCircle className="w-4 h-4 text-[#f370a8]" />
+                    <MessageCircle className="w-4 h-4 text-emerald-500" />
                     <span>WA Client</span>
                   </a>
 
@@ -1202,31 +1174,32 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                       setCrewSheetInvoice(inv);
                       setCrewSheetOpen(true);
                     }}
-                    className="flex-1 sm:flex-none h-9 px-3 rounded-xl border-[#4d3085]/30 bg-gradient-to-r from-[#4d3085]/5 to-[#f370a8]/10 hover:from-[#4d3085]/15 hover:to-[#f370a8]/20 text-[#4d3085] dark:text-[#c4b5fd] font-bold text-xs flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-2xs"
+                    className="lg:col-span-2 h-11 lg:h-9 px-3 rounded-2xl border-[#4d3085]/30 bg-gradient-to-r from-[#4d3085]/10 to-[#f370a8]/10 hover:from-[#4d3085]/20 hover:to-[#f370a8]/20 text-[#4d3085] dark:text-[#c4b5fd] font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-2xs border"
                     title="Buka Surat Tugas, Checklist Properti & Stok Balon Kru"
                     aria-label={`Buka Surat Tugas dan Checklist Properti Pesanan #${inv.invoiceNumber}`}
                   >
                     <Boxes className="w-3.5 h-3.5 text-[#f370a8]" />
                     <span>Checklist Kru</span>
                     {inv.dispatchedProperties && inv.dispatchedProperties.length > 0 && (
-                      <span className="ml-0.5 px-1.5 py-0.2 text-[9px] font-black rounded-full bg-[#4d3085] text-white">
+                      <span className="ml-0.5 px-1.5 py-0.5 text-[10px] font-black rounded-full bg-[#4d3085] text-white">
                         {inv.dispatchedProperties.length}
                       </span>
                     )}
                   </Button>
 
+                  <div className="col-span-2 flex items-center gap-2">
                   {/* Lunaskan Tagihan 1-Klik (jika belum lunas) */}
                   {inv.status !== 'paid' && (
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
                       onClick={() => handleQuickMarkPaid(inv)}
-                      className="h-9 w-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0"
+                      className="flex-1 h-11 lg:h-9 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 active:scale-95 transition-all text-xs font-bold gap-1.5"
                       title="Catat Pelunasan Tagihan (Lunas Penuh ✨)"
                       aria-label={`Catat Pelunasan Tagihan #${inv.invoiceNumber}`}
                     >
                       <CheckCircle2 className="w-4 h-4" />
+                      <span>Tandai Lunas</span>
                     </Button>
                   )}
 
@@ -1234,7 +1207,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   <Popover>
                     <PopoverTrigger
                       aria-label={`Menu aksi tambahan untuk invoice #${inv.invoiceNumber}`}
-                      className="h-9 w-9 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+                      className="h-11 w-11 lg:h-9 lg:w-9 ml-auto rounded-2xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
                       title="Aksi Tambahan"
                     >
                       <MoreVertical className="w-4 h-4" />
@@ -1290,6 +1263,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                       )}
                     </PopoverContent>
                   </Popover>
+                  </div>
                 </div>
               </div>
             );

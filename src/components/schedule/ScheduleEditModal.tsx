@@ -1,5 +1,6 @@
 'use client';
 
+import { validateSetupTime } from '@/lib/format';
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -79,6 +80,11 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const setupError = validateSetupTime(setupTime, eventTime);
+    if (setupError) {
+      alert(setupError);
+      return;
+    }
     onSave({
       bookingDate,
       eventTime,

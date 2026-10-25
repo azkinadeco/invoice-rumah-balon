@@ -66,9 +66,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               type="button"
               onClick={() => onTabChange('invoices')}
               className={cn(
-                'flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
+                'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95',
                 activeTab === 'invoices'
-                  ? 'bg-card text-foreground shadow-xs'
+                  ? 'bg-card text-foreground shadow-xs scale-102'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -81,9 +81,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               type="button"
               onClick={() => onTabChange('schedule')}
               className={cn(
-                'flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer relative',
+                'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer relative active:scale-95',
                 activeTab === 'schedule'
-                  ? 'bg-card text-foreground shadow-xs'
+                  ? 'bg-card text-foreground shadow-xs scale-102'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -91,7 +91,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               <span className="hidden sm:inline">Jadwal Acara</span>
               <span className="sm:hidden">Jadwal</span>
               {scheduleCount > 0 && (
-                <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#f370a8] text-white">
+                <span className="ml-0.5 px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#f370a8] text-white animate-badge-pulse">
                   {scheduleCount}
                 </span>
               )}
@@ -101,9 +101,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               type="button"
               onClick={() => onTabChange('inventory')}
               className={cn(
-                'flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer relative',
+                'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer relative active:scale-95',
                 activeTab === 'inventory'
-                  ? 'bg-card text-foreground shadow-xs'
+                  ? 'bg-card text-foreground shadow-xs scale-102'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -217,7 +217,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             className="hidden sm:inline-flex h-9 px-3 sm:px-4 text-xs rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105 active:scale-95 items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Buat Invoice</span>
+            <span>Buat Invoice</span>
           </Button>
         </div>
       </div>

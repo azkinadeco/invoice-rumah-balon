@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { InvoiceData, InvoiceItem, InvoiceStatus } from '@/types/invoice';
 import { PRESET_ITEMS, STATUS_COLORS } from '@/lib/constants';
-import { formatRupiah, parseRupiahInput, formatThousand } from '@/lib/format';
+import { formatRupiah, parseRupiahInput, formatThousand, validateSetupTime } from '@/lib/format';
 import {
   Dialog,
   DialogContent,
@@ -313,6 +313,11 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
     e.preventDefault();
     if (!formData.clientName.trim()) {
       alert('Mohon isi nama pelanggan terlebih dahulu.');
+      return;
+    }
+    const setupError = validateSetupTime(formData.setupTime, formData.eventTime);
+    if (setupError) {
+      alert(setupError);
       return;
     }
     onSave(formData);
@@ -827,9 +832,11 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                       >
                         <Plus className="w-3 h-3 text-[#f370a8]" />
                         <span className="font-semibold">{preset.name}</span>
-                        <span className="text-muted-foreground font-mono">
-                          ({formatThousand(preset.amount)})
-                        </span>
+                        {preset.amount > 0 && (
+                          <span className="text-muted-foreground font-mono">
+                            ({formatThousand(preset.amount)})
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>

@@ -50,34 +50,40 @@ export const InvoiceFilterToolbar: React.FC<InvoiceFilterToolbarProps> = ({
   return (
     <div className="space-y-3">
       {/* Main Filter Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3.5 sm:p-4 bg-card rounded-3xl border border-border shadow-xs">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3.5 sm:p-4 bg-card/90 backdrop-blur-xl rounded-3xl border border-border/80 shadow-sm transition-all">
         {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground" />
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground pointer-events-none" />
           <Input
             id="main-invoice-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari client, no invoice, venue... (tekan /)"
+            placeholder="Cari client, no invoice, venue..."
             aria-label="Cari invoice"
-            className="pl-10 pr-9 h-11 text-xs rounded-2xl border-border bg-background/80 font-medium transition-all focus:ring-2 focus:ring-[#f370a8]/40"
+            className="pl-10 pr-16 h-11 text-xs rounded-2xl border-border/80 bg-background/60 font-medium transition-all focus:ring-2 focus:ring-[#f370a8]/50 focus:border-[#f370a8]"
           />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              aria-label="Bersihkan pencarian"
-              className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground text-xs p-0.5 rounded-full hover:bg-muted transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <div className="absolute right-2.5 top-2.5 flex items-center gap-1.5">
+            {search ? (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Bersihkan pencarian"
+                className="text-muted-foreground hover:text-foreground text-xs p-1 rounded-full hover:bg-muted transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : (
+              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-bold text-muted-foreground bg-muted/80 rounded-md border border-border">
+                /
+              </kbd>
+            )}
+          </div>
         </div>
 
-        {/* Period & Status Chips */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Filter Groups & Actions */}
+        <div className="flex flex-wrap items-center gap-2.5 justify-between lg:justify-end w-full lg:w-auto">
           {/* Period selector */}
-          <div className="flex items-center bg-muted/60 p-0.5 rounded-xl border border-border/80">
+          <div className="flex items-center bg-muted/70 p-1 rounded-2xl border border-border/80 shrink-0">
             {[
               { id: 'all', label: 'Semua Waktu' },
               { id: 'this_month', label: 'Bulan Ini' },
@@ -88,9 +94,9 @@ export const InvoiceFilterToolbar: React.FC<InvoiceFilterToolbarProps> = ({
                 type="button"
                 onClick={() => setPeriodFilter(p.id as any)}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer',
+                  'px-2.5 sm:px-3 py-1.5 text-xs rounded-xl font-bold transition-all duration-200 cursor-pointer',
                   periodFilter === p.id
-                    ? 'bg-card text-foreground shadow-xs'
+                    ? 'bg-card text-foreground shadow-xs scale-102'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
@@ -116,10 +122,10 @@ export const InvoiceFilterToolbar: React.FC<InvoiceFilterToolbarProps> = ({
                   type="button"
                   onClick={() => setStatusFilter(st.id)}
                   className={cn(
-                    'px-3 py-1.5 text-xs rounded-xl font-bold transition-all whitespace-nowrap border cursor-pointer',
+                    'px-3 py-1.5 text-xs rounded-xl font-bold transition-all duration-200 whitespace-nowrap border cursor-pointer active:scale-95',
                     active
-                      ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-xs'
-                      : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground border-border'
+                      ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-md shadow-[#f370a8]/25 scale-105'
+                      : 'bg-card/80 hover:bg-muted text-muted-foreground hover:text-foreground border-border hover:border-[#f370a8]/30'
                   )}
                 >
                   {st.label}
@@ -127,82 +133,82 @@ export const InvoiceFilterToolbar: React.FC<InvoiceFilterToolbarProps> = ({
               );
             })}
           </div>
-        </div>
 
-        {/* Unified "Backup & Ekspor" Dropdown */}
-        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-          <input
-            ref={importFileRef}
-            type="file"
-            accept=".json"
-            onChange={onImportBackup}
-            className="hidden"
-          />
+          {/* Unified "Backup & Ekspor" Dropdown */}
+          <div className="flex items-center gap-2 shrink-0">
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".json"
+              onChange={onImportBackup}
+              className="hidden"
+            />
 
-          <Popover>
-            <PopoverTrigger
-              type="button"
-              aria-label="Menu Backup dan Ekspor Data"
-              className={cn(
-                'inline-flex items-center justify-center h-10 px-3.5 text-xs rounded-2xl border font-semibold transition-all hover:scale-105 gap-1.5 shadow-2xs cursor-pointer',
-                needBackupReminder
-                  ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-md shadow-[#f370a8]/25'
-                  : 'border-border text-foreground bg-card hover:bg-muted'
-              )}
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span>Backup & Ekspor</span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-              {needBackupReminder && (
-                <span className="ml-0.5 px-1.5 py-0.2 text-[9px] font-black rounded-full bg-white text-[#4d3085]">
-                  Penting
-                </span>
-              )}
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-64 p-2 space-y-1 rounded-2xl shadow-xl border-border bg-card">
-              <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                Opsi Ekspor & Cadangan
-              </div>
-
-              <button
+            <Popover>
+              <PopoverTrigger
                 type="button"
-                onClick={onExportCSV}
-                className="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl hover:bg-muted text-foreground flex items-center gap-2.5 cursor-pointer transition-colors"
+                aria-label="Menu Backup dan Ekspor Data"
+                className={cn(
+                  'inline-flex items-center justify-center h-10 px-3.5 text-xs rounded-2xl border font-semibold transition-all duration-200 hover:scale-105 active:scale-95 gap-1.5 shadow-2xs cursor-pointer',
+                  needBackupReminder
+                    ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-md shadow-[#f370a8]/25'
+                    : 'border-border text-foreground bg-card hover:bg-muted'
+                )}
               >
-                <FileSpreadsheet className="w-4 h-4 text-[#4d3085] dark:text-[#c4b5fd]" />
-                <div>
-                  <div className="font-bold">Ekspor ke Excel / CSV</div>
-                  <div className="text-[10px] text-muted-foreground">Unduh laporan tabel invoice</div>
+                <Database className="w-3.5 h-3.5 text-[#f370a8]" />
+                <span>Backup & Ekspor</span>
+                <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                {needBackupReminder && (
+                  <span className="ml-0.5 px-1.5 py-0.2 text-[9px] font-black rounded-full bg-white text-[#4d3085] animate-badge-pulse">
+                    Penting
+                  </span>
+                )}
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-2 space-y-1 rounded-2xl shadow-xl border-border bg-card">
+                <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Opsi Ekspor & Cadangan
                 </div>
-              </button>
 
-              <button
-                type="button"
-                onClick={onExportBackup}
-                className="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl hover:bg-muted text-foreground flex items-center gap-2.5 cursor-pointer transition-colors"
-              >
-                <Download className="w-4 h-4 text-[#f370a8]" />
-                <div>
-                  <div className="font-bold">Cadangkan File JSON</div>
-                  <div className="text-[10px] text-muted-foreground">Database lengkap invoice & stok</div>
-                </div>
-              </button>
+                <button
+                  type="button"
+                  onClick={onExportCSV}
+                  className="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl hover:bg-muted text-foreground flex items-center gap-2.5 cursor-pointer transition-colors"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-[#4d3085] dark:text-[#c4b5fd]" />
+                  <div>
+                    <div className="font-bold">Ekspor ke Excel / CSV</div>
+                    <div className="text-[10px] text-muted-foreground">Unduh laporan tabel invoice</div>
+                  </div>
+                </button>
 
-              <div className="h-px bg-border my-1" />
+                <button
+                  type="button"
+                  onClick={onExportBackup}
+                  className="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl hover:bg-muted text-foreground flex items-center gap-2.5 cursor-pointer transition-colors"
+                >
+                  <Download className="w-4 h-4 text-[#f370a8]" />
+                  <div>
+                    <div className="font-bold">Cadangkan File JSON</div>
+                    <div className="text-[10px] text-muted-foreground">Database lengkap invoice & stok</div>
+                  </div>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => importFileRef.current?.click()}
-                className="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl hover:bg-muted text-foreground flex items-center gap-2.5 cursor-pointer transition-colors"
-              >
-                <Upload className="w-4 h-4 text-emerald-500" />
-                <div>
-                  <div className="font-bold">Pulihkan Cadangan JSON</div>
-                  <div className="text-[10px] text-muted-foreground">Upload file backup yang tersimpan</div>
-                </div>
-              </button>
-            </PopoverContent>
-          </Popover>
+                <div className="h-px bg-border my-1" />
+
+                <button
+                  type="button"
+                  onClick={() => importFileRef.current?.click()}
+                  className="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl hover:bg-muted text-foreground flex items-center gap-2.5 cursor-pointer transition-colors"
+                >
+                  <Upload className="w-4 h-4 text-emerald-500" />
+                  <div>
+                    <div className="font-bold">Pulihkan Cadangan JSON</div>
+                    <div className="text-[10px] text-muted-foreground">Upload file backup yang tersimpan</div>
+                  </div>
+                </button>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 

@@ -74,28 +74,36 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
           setPeriodFilter('all');
         }}
         className={cn(
-          'rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.98]',
-          statusFilter === 'all' && periodFilter === 'all' && 'ring-2 ring-[#4d3085]/40'
+          'relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border bg-card/90 backdrop-blur-xl shadow-sm hover:shadow-xl hover:shadow-[#4d3085]/15 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.98] group',
+          statusFilter === 'all' && periodFilter === 'all'
+            ? 'ring-2 ring-[#4d3085] dark:ring-[#c4b5fd]/60 border-[#4d3085]/60'
+            : 'hover:border-[#4d3085]/40'
         )}
         title="Klik untuk menampilkan seluruh invoice"
       >
-        <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#4d3085] to-[#f370a8] opacity-80" />
+        <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
           <div className="space-y-1 sm:space-y-1.5 min-w-0">
-            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 flex-wrap">
+            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 flex-wrap">
               <span>Total Invoice</span>
-              <span className="text-[9px] sm:text-[10px] bg-muted text-foreground font-semibold px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full border border-border">
-                {periodFilter === 'this_month' ? 'Bulan Ini' : periodFilter === 'last_month' ? 'Bulan Lalu' : 'Semua'}
-              </span>
+              {periodFilter !== 'all' && (
+                <span className="text-[9px] sm:text-[10px] bg-muted/80 text-foreground font-semibold px-2 py-0.5 rounded-full border border-border/80">
+                  {periodFilter === 'this_month' ? 'Bulan Ini' : 'Bulan Lalu'}
+                </span>
+              )}
             </div>
-            <div className="text-xl sm:text-3xl font-black text-foreground tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-foreground tracking-tight font-mono">
               {filteredInvoices.length}
             </div>
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">
-              {activeInvoices.length} aktif {cancelledCount > 0 ? `• ${cancelledCount} batal` : ''}
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
+              <span className="text-foreground font-bold">{activeInvoices.length}</span> aktif
+              {cancelledCount > 0 ? (
+                <span className="text-muted-foreground"> • {cancelledCount} batal</span>
+              ) : null}
             </span>
           </div>
-          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#4d3085] text-white flex items-center justify-center shadow-md shadow-[#4d3085]/20 shrink-0">
-            <Receipt className="w-4 h-4 sm:w-6 sm:h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#4d3085] text-white flex items-center justify-center shadow-md shadow-[#4d3085]/25 shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+            <Receipt className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </CardContent>
       </Card>
@@ -104,28 +112,33 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
       <Card
         onClick={() => setPeriodFilter((prev: any) => (prev === 'this_month' ? 'all' : 'this_month'))}
         className={cn(
-          'rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.98]',
-          periodFilter === 'this_month' && 'ring-2 ring-[#f370a8]/40'
+          'relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border bg-card/90 backdrop-blur-xl shadow-sm hover:shadow-xl hover:shadow-[#f370a8]/15 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.98] group',
+          periodFilter === 'this_month'
+            ? 'ring-2 ring-[#f370a8] border-[#f370a8]/60'
+            : 'hover:border-[#f370a8]/40'
         )}
         title="Klik untuk filter invoice bulan ini"
       >
-        <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-[#f370a8] opacity-90" />
+        <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
           <div className="space-y-1 sm:space-y-1.5 min-w-0">
-            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 flex-wrap">
+            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 flex-wrap">
               <span>Total Nilai</span>
-              <span className="text-[9px] sm:text-[10px] bg-[#f370a8]/15 text-[#f370a8] font-bold px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full border border-[#f370a8]/30">
-                {periodFilter === 'this_month' ? 'Bulan Ini' : 'Semua'}
-              </span>
+              {periodFilter !== 'all' && (
+                <span className="text-[9px] sm:text-[10px] bg-[#f370a8]/15 text-[#f370a8] dark:text-[#f472b6] font-bold px-2 py-0.5 rounded-full border border-[#f370a8]/30">
+                  {periodFilter === 'this_month' ? 'Bulan Ini' : 'Bulan Lalu'}
+                </span>
+              )}
             </div>
-            <div className="text-sm sm:text-2xl font-black text-[#f370a8] dark:text-[#f472b6] font-mono tracking-tight truncate">
+            <div className="text-base sm:text-2xl font-black text-[#f370a8] dark:text-[#f472b6] font-mono tracking-tight truncate">
               {formatRupiah(totalOmset)}
             </div>
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
               Total tagihan aktif
             </span>
           </div>
-          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#f370a8] text-white flex items-center justify-center shadow-md shadow-[#f370a8]/20 shrink-0">
-            <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#f370a8] text-white flex items-center justify-center shadow-md shadow-[#f370a8]/25 shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </CardContent>
       </Card>
@@ -134,28 +147,31 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
       <Card
         onClick={() => setStatusFilter((prev: any) => (prev === 'paid' ? 'all' : 'paid'))}
         className={cn(
-          'rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.98]',
-          statusFilter === 'paid' && 'ring-2 ring-emerald-500/40'
+          'relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border bg-card/90 backdrop-blur-xl shadow-sm hover:shadow-xl hover:shadow-emerald-500/15 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.98] group',
+          statusFilter === 'paid'
+            ? 'ring-2 ring-emerald-500 border-emerald-500/60'
+            : 'hover:border-emerald-500/40'
         )}
         title="Klik untuk filter invoice yang sudah Lunas"
       >
-        <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#4d3085] to-emerald-500 opacity-90" />
+        <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
           <div className="space-y-1 sm:space-y-1.5 min-w-0">
-            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 flex-wrap">
+            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 flex-wrap">
               <span>Kas Masuk</span>
-              <span className="text-[9px] sm:text-[10px] bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] font-bold px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full border border-[#4d3085]/25">
+              <span className="text-[9px] sm:text-[10px] bg-[#4d3085]/15 text-[#4d3085] dark:text-[#c4b5fd] font-bold px-2 py-0.5 rounded-full border border-[#4d3085]/30">
                 DP+Lunas
               </span>
             </div>
-            <div className="text-sm sm:text-2xl font-black text-[#4d3085] dark:text-[#c4b5fd] font-mono tracking-tight truncate">
+            <div className="text-base sm:text-2xl font-black text-[#4d3085] dark:text-[#c4b5fd] font-mono tracking-tight truncate">
               {formatRupiah(totalDpCollected)}
             </div>
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">
-              {paidCount} lunas • {dpCount} DP
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
+              <span className="text-emerald-500 font-bold">{paidCount}</span> lunas • <span className="text-[#4d3085] dark:text-[#c4b5fd] font-bold">{dpCount}</span> DP
             </span>
           </div>
-          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#4d3085] text-white flex items-center justify-center shadow-md shadow-[#4d3085]/20 shrink-0">
-            <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#4d3085] text-white flex items-center justify-center shadow-md shadow-[#4d3085]/25 shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+            <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </CardContent>
       </Card>
@@ -164,28 +180,33 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
       <Card
         onClick={() => setStatusFilter((prev: any) => (prev === 'dp_paid' ? 'all' : 'dp_paid'))}
         className={cn(
-          'rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer active:scale-[0.98]',
-          statusFilter === 'dp_paid' && 'ring-2 ring-rose-500/40'
+          'relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border bg-card/90 backdrop-blur-xl shadow-sm hover:shadow-xl hover:shadow-rose-500/15 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.98] group',
+          statusFilter === 'dp_paid'
+            ? 'ring-2 ring-rose-500 border-rose-500/60'
+            : 'hover:border-rose-500/40'
         )}
         title="Klik untuk filter invoice yang masih ada sisa tagihan"
       >
-        <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-[#f370a8] opacity-90" />
+        <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
           <div className="space-y-1 sm:space-y-1.5 min-w-0">
-            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 sm:gap-1.5 flex-wrap">
+            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 flex-wrap">
               <span>Sisa Piutang</span>
-              <span className="text-[9px] sm:text-[10px] bg-rose-500/15 text-rose-500 font-bold px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full border border-rose-500/30">
-                H-1
-              </span>
+              {unpaidInvoicesCount > 0 && (
+                <span className="text-[9px] sm:text-[10px] bg-rose-500/15 text-rose-500 dark:text-rose-400 font-bold px-2 py-0.5 rounded-full border border-rose-500/30">
+                  {unpaidInvoicesCount} Tertunda
+                </span>
+              )}
             </div>
-            <div className="text-sm sm:text-2xl font-black text-rose-500 dark:text-rose-400 font-mono tracking-tight truncate">
+            <div className="text-base sm:text-2xl font-black text-rose-500 dark:text-rose-400 font-mono tracking-tight truncate">
               {formatRupiah(totalRemainingUnpaid)}
             </div>
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">
-              {unpaidInvoicesCount} belum lunas
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">
+              <span className="text-rose-500 font-bold">{unpaidInvoicesCount}</span> belum lunas
             </span>
           </div>
-          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#f370a8] to-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0">
-            <Clock className="w-4 h-4 sm:w-6 sm:h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#f370a8] to-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/25 shrink-0 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300">
+            <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </CardContent>
       </Card>

@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import {
   Printer,
   Users,
@@ -35,6 +36,7 @@ import {
   FileImage,
   Loader2,
   Edit,
+  MoreHorizontal,
 } from 'lucide-react';
 
 interface CrewDispatchSheetModalProps {
@@ -446,33 +448,15 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
             </div>
           </DialogHeader>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full touch-pan-x">
-            {/* PNG */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadPng}
-              disabled={isGeneratingImage || isGeneratingPdf}
-              aria-label="Unduh lembar kerja format PNG"
-              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
-            >
-              {isGeneratingImage ? (
-                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-              ) : (
-                <FileImage className="w-3.5 h-3.5 mr-1.5 text-[#4d3085] dark:text-[#c4b5fd]" />
-              )}
-              PNG
-            </Button>
-
-            {/* PDF A4 */}
+          <div className="flex items-center gap-2 sm:pr-8">
+            {/* Primary: PDF A4 */}
             <Button
               type="button"
               size="sm"
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf || isGeneratingImage}
               aria-label="Unduh lembar kerja format PDF A4"
-              className="h-9 px-3.5 text-xs rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105"
+              className="flex-1 sm:flex-none h-11 sm:h-9 px-4 text-xs rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all active:scale-95"
             >
               {isGeneratingPdf ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -482,31 +466,54 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
               Unduh PDF A4
             </Button>
 
-            {/* Print */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              aria-label="Cetak lembar kerja crew lapangan"
-              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
-            >
-              <Printer className="w-3.5 h-3.5 mr-1.5 text-foreground" />
-              <span>Cetak A4</span>
-            </Button>
-
-            {/* Kirim WA Crew */}
+            {/* Secondary: Kirim WA Crew */}
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleShareCrewWA}
               aria-label="Kirim lembar tugas dan checklist ke WhatsApp Crew"
-              className="h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-[#f370a8] flex items-center gap-1.5 shadow-2xs transition-all hover:scale-105"
+              className="flex-1 sm:flex-none h-11 sm:h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-[#f370a8] flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95"
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Kirim ke WA Crew</span>
+              <span>Kirim WA Crew</span>
             </Button>
+
+            {/* Tertiary: PNG & Cetak */}
+            <Popover>
+              <PopoverTrigger
+                type="button"
+                aria-label="Opsi ekspor lainnya"
+                className="h-11 w-11 sm:h-9 sm:w-9 rounded-xl border border-border text-foreground hover:bg-muted flex items-center justify-center cursor-pointer shrink-0 active:scale-95 transition-all"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-48 p-1.5 space-y-0.5 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={handleDownloadPng}
+                  disabled={isGeneratingImage || isGeneratingPdf}
+                  aria-label="Unduh lembar kerja format PNG"
+                  className="w-full text-left px-3 py-3 rounded-xl text-xs font-bold hover:bg-muted flex items-center gap-2 text-foreground cursor-pointer disabled:opacity-50"
+                >
+                  {isGeneratingImage ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FileImage className="w-4 h-4 text-[#4d3085] dark:text-[#c4b5fd]" />
+                  )}
+                  <span>Unduh PNG</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  aria-label="Cetak lembar kerja crew lapangan"
+                  className="w-full text-left px-3 py-3 rounded-xl text-xs font-bold hover:bg-muted flex items-center gap-2 text-foreground cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Cetak A4</span>
+                </button>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -1038,7 +1045,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
         </div>
 
         {/* Modal Footer (Screen Only) */}
-        <DialogFooter className="no-print p-4 border-t border-border bg-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <DialogFooter className="no-print px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border bg-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <span className="text-[11px] text-muted-foreground">
             Tips: Checklist tersimpan otomatis dan bisa dicentang langsung di HP atau dicetak ke kertas.
           </span>
@@ -1046,7 +1053,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
             type="button"
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="h-9 px-4 rounded-xl border border-border"
+            className="h-11 sm:h-9 w-full sm:w-auto px-4 rounded-xl border border-border"
           >
             Tutup
           </Button>

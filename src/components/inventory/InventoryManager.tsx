@@ -263,30 +263,34 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
             setConditionFilter('all');
           }}
           className={cn(
-            'rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95',
-            conditionFilter === 'all' && selectedCategory === 'all' && 'ring-2 ring-[#4d3085]/40'
+            'relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/80 bg-card/90 backdrop-blur-xl shadow-xs transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg group active:scale-[0.98]',
+            conditionFilter === 'all' && selectedCategory === 'all'
+              ? 'ring-2 ring-[#4d3085] border-[#4d3085]/60'
+              : 'hover:border-[#4d3085]/40'
           )}
           title="Klik untuk melihat semua barang"
         >
-          <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#4d3085] opacity-80" />
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
             <div className="space-y-1 min-w-0">
               <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground block truncate">
                 Total Macam
               </span>
-              <div className="text-xl sm:text-3xl font-black text-foreground tracking-tight">
+              <div className="text-xl sm:text-3xl font-black text-foreground tracking-tight font-mono">
                 {stats.totalTypes}
               </div>
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">Item terdaftar</span>
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">Item terdaftar</span>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#4d3085] text-white flex items-center justify-center shadow-md shadow-[#4d3085]/20 shrink-0">
-              <Boxes className="w-4 h-4 sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#4d3085] text-white flex items-center justify-center shadow-md shadow-[#4d3085]/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shrink-0">
+              <Boxes className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 2: Total Unit Stok Fisik */}
-        <Card className="rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md transition-all">
-          <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+        <Card className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/80 bg-card/90 backdrop-blur-xl shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#f370a8] opacity-90" />
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
             <div className="space-y-1 min-w-0">
               <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground block truncate">
                 Total Stok Fisik
@@ -294,10 +298,10 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
               <div className="text-xl sm:text-3xl font-black text-[#f370a8] dark:text-[#f472b6] tracking-tight font-mono">
                 {stats.totalStockCount}
               </div>
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">Unit gudang</span>
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">Unit gudang</span>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#f370a8] text-white flex items-center justify-center shadow-md shadow-[#f370a8]/20 shrink-0">
-              <Package className="w-4 h-4 sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#f370a8] text-white flex items-center justify-center shadow-md shadow-[#f370a8]/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shrink-0">
+              <Package className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
@@ -306,12 +310,15 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
         <Card
           onClick={() => setConditionFilter((prev) => (prev === 'baik' ? 'all' : 'baik'))}
           className={cn(
-            'rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95',
-            conditionFilter === 'baik' && 'ring-2 ring-emerald-500/50'
+            'relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/80 bg-card/90 backdrop-blur-xl shadow-xs transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg group active:scale-[0.98]',
+            conditionFilter === 'baik'
+              ? 'ring-2 ring-emerald-500 border-emerald-500/60'
+              : 'hover:border-emerald-500/40'
           )}
           title="Klik untuk filter barang Siap Pakai"
         >
-          <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 opacity-90" />
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
             <div className="space-y-1 min-w-0">
               <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground block truncate">
                 Siap Dipakai
@@ -319,10 +326,10 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
               <div className="text-xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">
                 {stats.goodConditionCount}
               </div>
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">Status baik</span>
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">Status baik</span>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
-              <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shrink-0">
+              <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
@@ -331,12 +338,15 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
         <Card
           onClick={() => setConditionFilter((prev) => (prev === 'low_stock' ? 'all' : 'low_stock'))}
           className={cn(
-            'rounded-2xl sm:rounded-3xl border-border bg-card shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95',
-            conditionFilter === 'low_stock' && 'ring-2 ring-rose-500/50'
+            'relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/80 bg-card/90 backdrop-blur-xl shadow-xs transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg group active:scale-[0.98]',
+            conditionFilter === 'low_stock'
+              ? 'ring-2 ring-rose-500 border-rose-500/60'
+              : 'hover:border-rose-500/40'
           )}
           title="Klik untuk melihat barang yang butuh restock"
         >
-          <CardContent className="p-3 sm:p-5 flex items-center justify-between gap-2">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-[#f370a8] opacity-90" />
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between gap-2.5">
             <div className="space-y-1 min-w-0">
               <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-500 font-extrabold flex items-center gap-1">
                 <span className="truncate">Restock</span>
@@ -347,10 +357,10 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
               <div className="text-xl sm:text-3xl font-black text-rose-500 dark:text-rose-400 tracking-tight font-mono">
                 {stats.lowStockCount}
               </div>
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground block truncate">Stok menipis</span>
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium block truncate">Stok menipis</span>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#f370a8] to-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0">
-              <AlertTriangle className="w-4 h-4 sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#f370a8] to-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300 shrink-0">
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
@@ -377,22 +387,22 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
       )}
 
       {/* 2. Control Toolbar & Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 p-3.5 sm:p-4 bg-card rounded-3xl border border-border shadow-xs">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 p-3.5 sm:p-4 bg-card/90 backdrop-blur-xl rounded-3xl border border-border/80 shadow-xs transition-all">
         {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground" />
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-muted-foreground pointer-events-none" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama barang, rak, lokasi, atau catatan..."
             aria-label="Cari barang inventaris dan stok balon"
-            className="pl-10 pr-9 h-11 text-xs rounded-2xl border-border bg-background/80 font-medium placeholder:text-muted-foreground dark:placeholder:text-slate-400 text-foreground"
+            className="pl-10 pr-9 h-11 text-xs rounded-2xl border-border/80 bg-background/60 font-medium placeholder:text-muted-foreground text-foreground focus:ring-2 focus:ring-[#f370a8]/50 transition-all"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground text-xs p-0.5 rounded-full hover:bg-muted transition-colors cursor-pointer"
+              className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground text-xs p-1 rounded-full hover:bg-muted transition-colors cursor-pointer"
               title="Bersihkan pencarian"
             >
               <X className="w-4 h-4" />
@@ -401,9 +411,9 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
         </div>
 
         {/* Category & Condition Filters */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-between lg:justify-end">
           {/* Quick Condition Selector */}
-          <div className="flex items-center bg-muted/60 p-0.5 rounded-xl border border-border/80">
+          <div className="flex items-center bg-muted/70 p-1 rounded-2xl border border-border/80">
             {[
               { id: 'all', label: 'Semua Kondisi' },
               { id: 'low_stock', label: '⚠️ Perlu Restock' },
@@ -414,9 +424,9 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                 type="button"
                 onClick={() => setConditionFilter(c.id)}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer',
+                  'px-3 py-1.5 text-xs rounded-xl font-bold transition-all cursor-pointer',
                   conditionFilter === c.id
-                    ? 'bg-card text-foreground shadow-xs'
+                    ? 'bg-card text-foreground shadow-xs scale-102'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
@@ -431,7 +441,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
             variant="outline"
             size="sm"
             onClick={handleExportCSV}
-            className="h-10 text-xs rounded-2xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
+            className="h-10 text-xs px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-foreground font-bold transition-all hover:scale-105 active:scale-95 shadow-2xs"
             title="Ekspor daftar stok ke file Excel / CSV"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5 text-[#4d3085] dark:text-[#c4b5fd]" />
@@ -452,15 +462,15 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
       </div>
 
       {/* 3. Category Filter Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
         <button
           type="button"
           onClick={() => setSelectedCategory('all')}
           className={cn(
-            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer',
+            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer active:scale-95',
             selectedCategory === 'all'
-              ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-xs'
-              : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground border-border'
+              ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-md shadow-[#f370a8]/25 scale-102'
+              : 'bg-card/80 hover:bg-muted text-muted-foreground hover:text-foreground border-border'
           )}
         >
           Semua Kategori ({items.length})
@@ -475,16 +485,16 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
               type="button"
               onClick={() => setSelectedCategory(cat.id)}
               className={cn(
-                'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer flex items-center gap-1.5',
+                'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer flex items-center gap-1.5 active:scale-95',
                 isSelected
-                  ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-xs'
-                  : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground border-border'
+                  ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white border-transparent shadow-md shadow-[#f370a8]/25 scale-102'
+                  : 'bg-card/80 hover:bg-muted text-muted-foreground hover:text-foreground border-border'
               )}
             >
               <span>{cat.label}</span>
               <span
                 className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full font-mono',
+                  'text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black',
                   isSelected ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
                 )}
               >
@@ -767,9 +777,9 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
       </div>
 
       {/* 4b. Desktop Table of Stock Items (hidden sm:block) */}
-      <div className="hidden sm:block rounded-3xl border border-border bg-card overflow-hidden shadow-sm">
+      <div className="hidden sm:block rounded-3xl border border-border/80 bg-card/90 backdrop-blur-xl overflow-hidden shadow-sm transition-all">
         <Table>
-          <TableHeader className="bg-muted/40">
+          <TableHeader className="bg-muted/40 border-b border-border/80">
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider py-4 pl-6">
                 Nama Barang & Properti
@@ -792,7 +802,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
             </TableRow>
           </TableHeader>
 
-          <TableBody className="divide-y divide-border">
+          <TableBody className="divide-y divide-border/70">
             {filteredItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-52 text-center">
@@ -801,7 +811,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                       <Boxes className="w-6 h-6" />
                     </div>
                     <div className="text-sm font-bold text-foreground">Tidak ada barang ditemukan</div>
-                    <p className="text-xs max-w-sm text-muted-foreground">
+                    <p className="text-xs max-w-sm text-muted-foreground font-medium">
                       {search
                         ? 'Tidak ada barang yang cocok dengan kata kunci pencarian.'
                         : 'Mulai catat barang, properti sewa, dan stok balon dengan tombol Tambah Barang.'}
@@ -830,7 +840,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredItems.map((it) => {
+              filteredItems.map((it, idx) => {
                 const catConfig =
                   INVENTORY_CATEGORIES.find((c) => c.id === it.category) || INVENTORY_CATEGORIES[0];
                 const condConfig =
@@ -848,7 +858,8 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                 return (
                   <TableRow
                     key={it.id}
-                    className="border-border hover:bg-muted/40 transition-colors group"
+                    style={{ animationDelay: `${idx * 20}ms` }}
+                    className="border-border/70 hover:bg-[#f370a8]/5 dark:hover:bg-[#f370a8]/8 transition-all duration-200 group animate-in fade-in-50"
                   >
                     {/* Nama Barang & Catatan */}
                     <TableCell className="py-4 pl-6">
@@ -862,7 +873,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                           )}
                         </div>
                         {it.notes && (
-                          <p className="text-[11px] text-muted-foreground line-clamp-1">
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 font-medium">
                             {it.notes}
                           </p>
                         )}
@@ -932,35 +943,35 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
 
                     {/* Stok Counter with Instant +/- Buttons */}
                     <TableCell className="text-center">
-                      <div className="inline-flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl border border-border">
+                      <div className="inline-flex items-center gap-1.5 bg-muted/70 p-1 rounded-2xl border border-border/80">
                         <button
                           type="button"
                           onClick={() => handleAdjustStock(it.id, -1)}
                           disabled={it.totalStock <= 0}
                           aria-label={`Kurangi 1 unit stok ${it.name}`}
-                          className="w-6 h-6 rounded-lg bg-card hover:bg-background text-foreground flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
+                          className="w-7 h-7 rounded-xl bg-card hover:bg-background text-foreground flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 active:scale-95 shadow-2xs cursor-pointer border border-border/50"
                           title="Kurangi 1 unit stok"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-mono font-black text-xs min-w-[45px] text-foreground">
+                        <span className="font-mono font-black text-xs min-w-[48px] text-foreground">
                           {it.totalStock} <span className="text-[10px] font-medium text-muted-foreground">{it.unit}</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => handleAdjustStock(it.id, 1)}
                           aria-label={`Tambah 1 unit stok ${it.name}`}
-                          className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#f370a8] to-[#4d3085] text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
+                          className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#f370a8] to-[#4d3085] text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-2xs cursor-pointer"
                           title="Tambah 1 unit stok"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </TableCell>
 
                     {/* Status Kondisi */}
                     <TableCell>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold border border-border bg-background">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold border border-border/80 bg-background/80">
                         <span className={cn('w-2 h-2 rounded-full', condConfig.dot)} />
                         <span>{condConfig.label}</span>
                       </div>
@@ -983,7 +994,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                           size="icon"
                           onClick={() => handleEditItem(it)}
                           aria-label={`Edit data barang ${it.name}`}
-                          className="h-8 w-8 rounded-xl hover:bg-muted text-foreground hover:scale-105 active:scale-95 transition-all"
+                          className="h-8 w-8 rounded-xl hover:bg-muted text-foreground hover:scale-110 active:scale-95 transition-all"
                           title="Edit Barang"
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -994,7 +1005,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                           size="icon"
                           onClick={() => handleDeleteItem(it.id, it.name)}
                           aria-label={`Hapus barang ${it.name}`}
-                          className="h-8 w-8 rounded-xl hover:bg-rose-500/10 text-zinc-400 hover:text-rose-500 hover:scale-105 active:scale-95 transition-all"
+                          className="h-8 w-8 rounded-xl hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 hover:scale-110 active:scale-95 transition-all"
                           title="Hapus Barang"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
