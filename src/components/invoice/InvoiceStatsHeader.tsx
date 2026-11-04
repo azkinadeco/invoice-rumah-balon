@@ -64,8 +64,9 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
     return (Number(i.total) || 0) - dp > 0;
   }).length;
 
+  // Only show a period badge when a period filter is active
   const periodLabel =
-    periodFilter === 'this_month' ? 'Bulan Ini' : periodFilter === 'last_month' ? 'Bulan Lalu' : 'Semua';
+    periodFilter === 'this_month' ? 'Bulan Ini' : periodFilter === 'last_month' ? 'Bulan Lalu' : undefined;
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
@@ -87,7 +88,7 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
         label="Total Nilai"
         value={formatRupiah(totalOmset)}
         compactValue
-        badge={periodFilter === 'this_month' ? 'Bulan Ini' : 'Semua'}
+        badge={periodLabel}
         sub="Total tagihan aktif"
         icon={TrendingUp}
         tone="pink"

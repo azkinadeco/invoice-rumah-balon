@@ -31,6 +31,7 @@ export const ScheduleStats: React.FC<ScheduleStatsProps> = ({
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
       <StatCard
         label={`Bulan ${currentMonthName}`}
+        sub="Total acara terjadwal"
         value={stats.monthTotal}
         icon={Calendar}
         tone="purple"
@@ -40,6 +41,7 @@ export const ScheduleStats: React.FC<ScheduleStatsProps> = ({
       />
       <StatCard
         label="Hari Ini"
+        sub="Perlu eksekusi & setup"
         value={stats.today}
         icon={Sparkles}
         tone="pink"
@@ -50,6 +52,7 @@ export const ScheduleStats: React.FC<ScheduleStatsProps> = ({
       />
       <StatCard
         label="Besok"
+        sub="Persiapan properti & balon"
         value={stats.tomorrow}
         icon={Clock}
         tone="purple"
@@ -59,6 +62,7 @@ export const ScheduleStats: React.FC<ScheduleStatsProps> = ({
       />
       <StatCard
         label="Pengerjaan / Siap"
+        sub="Proses dekor berjalan"
         value={stats.inProgress}
         icon={CheckCircle2}
         tone="emerald"

@@ -1,5 +1,6 @@
 'use client';
 
+import { FilterBar } from '@/components/common/FilterBar';
 import React, { useState, useMemo } from 'react';
 import {
   InventoryItem,
@@ -14,7 +15,6 @@ import {
 } from '@/types/inventory';
 import { StatCard } from '@/components/common/StatCard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -28,19 +28,16 @@ import {
   Boxes,
   Package,
   Plus,
-  Search,
   Edit,
   Trash2,
   FileSpreadsheet,
   AlertTriangle,
   CheckCircle2,
   MapPin,
-  Sparkles,
   RefreshCw,
   Minus,
   Download,
   Upload,
-  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InventoryItemModal } from './InventoryItemModal';
@@ -273,13 +270,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
           }}
           title="Klik untuk melihat semua barang"
         />
-        <StatCard
-          label="Total Stok Fisik"
-          value={stats.totalStockCount}
-          sub="Unit gudang"
-          icon={Package}
-          tone="pink"
-        />
+        <StatCard label="Total Stok Fisik" value={stats.totalStockCount} sub="Unit gudang" icon={Package} tone="pink" />
         <StatCard
           label="Siap Dipakai"
           value={stats.goodConditionCount}
@@ -323,244 +314,97 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
         </div>
       )}
 
-      {/* 2. Toolbar: search + actions, then condition + category filters */}
-      <div className="p-3 sm:p-3.5 bg-card rounded-2xl border border-border shadow-2xs space-y-3">
-        <div className="flex items-center gap-2">
-        {/* Search */}
-        <div className="relative flex-1 min-w-0">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari barang, rak, lokasi…"
-            aria-label="Cari barang inventaris dan stok balon"
-            className="pl-9 pr-9 h-10 text-sm rounded-xl border-border bg-background/70 font-medium placeholder:text-muted-foreground dark:placeholder:text-slate-400 text-foreground"
-          />
-          {search && (
-            <button
+      {/* 2. Search & Filters */}
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Cari nama barang, rak, lokasi, atau catatan..."
+        searchLabel="Cari barang inventaris dan stok balon"
+        filters={[
+          {
+            key: 'category',
+            label: 'Kategori',
+            value: selectedCategory,
+            onChange: setSelectedCategory,
+            options: [
+              { value: 'all', label: `Semua Kategori (${items.length})` },
+              ...INVENTORY_CATEGORIES.map((cat) => ({
+                value: cat.id,
+                label: `${cat.label} (${items.filter((it) => it.category === cat.id).length})`,
+              })),
+            ],
+          },
+          {
+            key: 'condition',
+            label: 'Kondisi',
+            value: conditionFilter,
+            onChange: setConditionFilter,
+            options: [
+              { value: 'all', label: 'Semua Kondisi' },
+              { value: 'low_stock', label: 'Perlu Restock' },
+              { value: 'baik', label: 'Siap Pakai' },
+            ],
+          },
+          {
+            key: 'balloonType',
+            label: 'Tipe Balon',
+            value: balloonTypeFilter,
+            onChange: setBalloonTypeFilter,
+            hidden: selectedCategory !== 'balon' && balloonTypeFilter === 'all',
+            options: [
+              { value: 'all', label: 'Semua Tipe' },
+              ...BALLOON_TYPES.map((t) => ({
+                value: t.id,
+                label: `${t.label} (${items.filter((it) => it.category === 'balon' && resolveItemBalloonType(it) === t.id).length})`,
+              })),
+            ],
+          },
+          {
+            key: 'balloonSize',
+            label: 'Ukuran Balon',
+            value: balloonSizeFilter,
+            onChange: setBalloonSizeFilter,
+            hidden: selectedCategory !== 'balon' && balloonSizeFilter === 'all',
+            options: [
+              { value: 'all', label: 'Semua Ukuran' },
+              ...BALLOON_SIZES.map((s) => ({
+                value: s.id,
+                label: `${s.inch}" (${items.filter((it) => it.category === 'balon' && resolveItemBalloonSize(it) === s.id).length})`,
+              })),
+            ],
+          },
+        ]}
+        onReset={handleResetFilters}
+        resultLabel={`${filteredItems.length} barang`}
+        actions={
+          <>
+            <Button
               type="button"
-              onClick={() => setSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs p-0.5 rounded-full hover:bg-muted transition-colors cursor-pointer"
-              title="Bersihkan pencarian"
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              aria-label="Ekspor daftar stok ke Excel / CSV"
+              className="h-11 lg:h-10 text-xs px-3.5 rounded-2xl border-border bg-card hover:bg-muted text-foreground font-bold active:scale-95 cursor-pointer"
             >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-          {/* Export CSV */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleExportCSV}
-            className="h-10 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold shrink-0"
-            title="Ekspor daftar stok ke file Excel / CSV"
-          >
-            <FileSpreadsheet className="w-4 h-4 sm:mr-1.5 text-[#4d3085] dark:text-[#c4b5fd]" />
-            <span className="sr-only sm:not-sr-only">Ekspor CSV</span>
-          </Button>
-
-          {/* Tambah Barang CTA */}
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleAddNewItem}
-            className="h-10 px-3 sm:px-4 text-xs rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white font-bold shadow-sm transition-colors active:scale-95 flex items-center gap-1.5 shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Tambah Barang</span>
-            <span className="sm:hidden">Tambah</span>
-          </Button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          {/* Quick Condition Selector */}
-          <div role="group" aria-label="Filter kondisi" className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-border/70 shrink-0 self-start">
-            {[
-              { id: 'all', label: 'Semua Kondisi' },
-              { id: 'low_stock', label: '⚠️ Perlu Restock' },
-              { id: 'baik', label: 'Siap Pakai' },
-            ].map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setConditionFilter(c.id)}
-                className={cn(
-                  'h-7 px-2.5 text-xs rounded-md font-semibold transition-all cursor-pointer whitespace-nowrap',
-                  conditionFilter === c.id
-                    ? 'bg-card text-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden sm:block w-px h-5 bg-border shrink-0" />
-
-          <div role="group" aria-label="Filter kategori" className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
-        <button
-          type="button"
-          onClick={() => setSelectedCategory('all')}
-          className={cn(
-            'h-7 px-3 rounded-full text-xs font-semibold transition-colors whitespace-nowrap border cursor-pointer',
-            selectedCategory === 'all'
-              ? 'bg-[#4d3085] text-white border-transparent dark:bg-[#f370a8]'
-              : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground border-border'
-          )}
-        >
-          Semua Kategori ({items.length})
-        </button>
-
-        {INVENTORY_CATEGORIES.map((cat) => {
-          const isSelected = selectedCategory === cat.id;
-          const count = items.filter((it) => it.category === cat.id).length;
-          return (
-            <button
-              key={cat.id}
+              <FileSpreadsheet className="w-4 h-4 text-[#4d3085] dark:text-[#c4b5fd]" />
+              <span className="hidden sm:inline ml-1.5">Ekspor CSV</span>
+            </Button>
+            <Button
               type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={cn(
-                'h-7 px-3 rounded-full text-xs font-semibold transition-colors whitespace-nowrap border cursor-pointer flex items-center gap-1.5',
-                isSelected
-                  ? 'bg-[#4d3085] text-white border-transparent dark:bg-[#f370a8]'
-                  : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground border-border'
-              )}
+              size="sm"
+              onClick={handleAddNewItem}
+              className="h-11 lg:h-10 px-4 text-xs rounded-2xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-extrabold shadow-md shadow-[#f370a8]/20 active:scale-95 flex items-center gap-1.5 cursor-pointer"
             >
-              <span>{cat.label}</span>
-              <span
-                className={cn(
-                  'text-[10px] px-1.5 py-px rounded-full font-mono',
-                  isSelected ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-          </div>
-        </div>
-      </div>
+              <Plus className="w-4 h-4" />
+              <span>Tambah</span>
+              <span className="hidden sm:inline">Barang</span>
+            </Button>
+          </>
+        }
+      />
 
-      {/* Sub-Filters Khusus Kategori Balon: Tipe (Retro, Doff, Chrome, Metalik, Pastel) & Ukuran (5", 12", 18", 36") */}
-      {(selectedCategory === 'balon' || balloonTypeFilter !== 'all' || balloonSizeFilter !== 'all') && (
-        <div className="p-3.5 sm:p-4 rounded-3xl bg-gradient-to-r from-pink-500/10 via-purple-500/5 to-card border border-pink-500/25 space-y-3 shadow-xs animate-in fade-in">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#f370a8]" />
-              <span className="text-xs font-black uppercase tracking-wider text-foreground">
-                Kategori Spesifik Balon
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f370a8]/20 text-[#be185d] dark:text-[#f472b6]">
-                Retro • Doff • Chrome • Metalik • Pastel & Ukuran 5&quot;, 12&quot;, 18&quot;, 36&quot;
-              </span>
-            </div>
-
-            {(balloonTypeFilter !== 'all' || balloonSizeFilter !== 'all') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setBalloonTypeFilter('all');
-                  setBalloonSizeFilter('all');
-                }}
-                className="text-[11px] font-bold text-[#f370a8] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>Reset Filter Balon ✕</span>
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-            {/* Filter 1: Tipe / Tekstur Balon */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-[11px] font-bold text-muted-foreground shrink-0 mr-1">Tipe Balon:</span>
-              <button
-                type="button"
-                onClick={() => setBalloonTypeFilter('all')}
-                className={cn(
-                  'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer whitespace-nowrap',
-                  balloonTypeFilter === 'all'
-                    ? 'bg-[#4d3085] text-white border-[#4d3085] shadow-xs'
-                    : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                )}
-              >
-                Semua Tipe
-              </button>
-              {BALLOON_TYPES.map((t) => {
-                const isSel = balloonTypeFilter === t.id;
-                const count = items.filter(
-                  (it) => it.category === 'balon' && resolveItemBalloonType(it) === t.id
-                ).length;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setBalloonTypeFilter(t.id)}
-                    className={cn(
-                      'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap',
-                      isSel
-                        ? `${t.badge} ring-2 ring-foreground/20 font-black shadow-xs`
-                        : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                    )}
-                  >
-                    <span className={cn('w-2 h-2 rounded-full', t.dotColor)} />
-                    <span>{t.label}</span>
-                    <span className="text-[10px] opacity-75 font-mono">({count})</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="hidden lg:block w-px h-6 bg-border mx-1" />
-
-            {/* Filter 2: Ukuran Balon */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-[11px] font-bold text-muted-foreground shrink-0 mr-1">Ukuran:</span>
-              <button
-                type="button"
-                onClick={() => setBalloonSizeFilter('all')}
-                className={cn(
-                  'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer whitespace-nowrap',
-                  balloonSizeFilter === 'all'
-                    ? 'bg-[#f370a8] text-white border-[#f370a8] shadow-xs'
-                    : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                )}
-              >
-                Semua Ukuran
-              </button>
-              {BALLOON_SIZES.map((s) => {
-                const isSel = balloonSizeFilter === s.id;
-                const count = items.filter(
-                  (it) => it.category === 'balon' && resolveItemBalloonSize(it) === s.id
-                ).length;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setBalloonSizeFilter(s.id)}
-                    className={cn(
-                      'px-2.5 py-1 text-xs font-bold rounded-xl border transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap',
-                      isSel
-                        ? `${s.badge} ring-2 ring-foreground/20 font-black shadow-xs`
-                        : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                    )}
-                  >
-                    <span>{s.inch}&quot;</span>
-                    <span className="text-[10px] opacity-70">({s.label.split(' ')[1] || ''})</span>
-                    <span className="text-[10px] opacity-75 font-mono">({count})</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4a. Mobile Stock Card List (lg:hidden) */}
-      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-2.5">
+      {/* 4a. Stock Card List: mobile & tablet (lg:hidden) */}
+      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-3">
         {filteredItems.length === 0 ? (
           <div className="md:col-span-2 p-8 rounded-3xl border border-border bg-card text-center space-y-2.5 text-muted-foreground">
             <div className="w-12 h-12 mx-auto rounded-2xl bg-[#f370a8]/10 text-[#f370a8] flex items-center justify-center">
@@ -719,9 +563,9 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
       </div>
 
       {/* 4b. Desktop Table of Stock Items (hidden lg:block) */}
-      <div className="hidden lg:block rounded-2xl border border-border bg-card overflow-hidden shadow-2xs">
+      <div className="hidden lg:block rounded-3xl border border-border/80 bg-card/90 backdrop-blur-xl overflow-hidden shadow-sm transition-all">
         <Table>
-          <TableHeader className="bg-muted/40">
+          <TableHeader className="bg-muted/40 border-b border-border/80">
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider py-4 pl-6">
                 Nama Barang & Properti
@@ -744,7 +588,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
             </TableRow>
           </TableHeader>
 
-          <TableBody className="divide-y divide-border">
+          <TableBody className="divide-y divide-border/70">
             {filteredItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-52 text-center">
@@ -753,7 +597,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                       <Boxes className="w-6 h-6" />
                     </div>
                     <div className="text-sm font-bold text-foreground">Tidak ada barang ditemukan</div>
-                    <p className="text-xs max-w-sm text-muted-foreground">
+                    <p className="text-xs max-w-sm text-muted-foreground font-medium">
                       {search
                         ? 'Tidak ada barang yang cocok dengan kata kunci pencarian.'
                         : 'Mulai catat barang, properti sewa, dan stok balon dengan tombol Tambah Barang.'}
@@ -782,7 +626,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredItems.map((it) => {
+              filteredItems.map((it, idx) => {
                 const catConfig =
                   INVENTORY_CATEGORIES.find((c) => c.id === it.category) || INVENTORY_CATEGORIES[0];
                 const condConfig =
@@ -800,7 +644,8 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                 return (
                   <TableRow
                     key={it.id}
-                    className="border-border hover:bg-muted/40 transition-colors group"
+                    style={{ animationDelay: `${idx * 20}ms` }}
+                    className="border-border/70 hover:bg-[#f370a8]/5 dark:hover:bg-[#f370a8]/8 transition-all duration-200 group animate-in fade-in-50"
                   >
                     {/* Nama Barang & Catatan */}
                     <TableCell className="py-4 pl-6">
@@ -814,7 +659,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                           )}
                         </div>
                         {it.notes && (
-                          <p className="text-[11px] text-muted-foreground line-clamp-1">
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 font-medium">
                             {it.notes}
                           </p>
                         )}
@@ -884,35 +729,35 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
 
                     {/* Stok Counter with Instant +/- Buttons */}
                     <TableCell className="text-center">
-                      <div className="inline-flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl border border-border">
+                      <div className="inline-flex items-center gap-1.5 bg-muted/70 p-1 rounded-2xl border border-border/80">
                         <button
                           type="button"
                           onClick={() => handleAdjustStock(it.id, -1)}
                           disabled={it.totalStock <= 0}
                           aria-label={`Kurangi 1 unit stok ${it.name}`}
-                          className="w-6 h-6 rounded-lg bg-card hover:bg-background text-foreground flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 shadow-2xs cursor-pointer"
+                          className="w-7 h-7 rounded-xl bg-card hover:bg-background text-foreground flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 shadow-2xs cursor-pointer border border-border/50"
                           title="Kurangi 1 unit stok"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-mono font-black text-xs min-w-[45px] text-foreground">
+                        <span className="font-mono font-black text-xs min-w-[48px] text-foreground">
                           {it.totalStock} <span className="text-[10px] font-medium text-muted-foreground">{it.unit}</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => handleAdjustStock(it.id, 1)}
                           aria-label={`Tambah 1 unit stok ${it.name}`}
-                          className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#f370a8] to-[#4d3085] text-white flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
+                          className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#f370a8] to-[#4d3085] text-white flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
                           title="Tambah 1 unit stok"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </TableCell>
 
                     {/* Status Kondisi */}
                     <TableCell>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold border border-border bg-background">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold border border-border/80 bg-background/80">
                         <span className={cn('w-2 h-2 rounded-full', condConfig.dot)} />
                         <span>{condConfig.label}</span>
                       </div>
@@ -947,7 +792,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
                           size="icon"
                           onClick={() => handleDeleteItem(it.id, it.name)}
                           aria-label={`Hapus barang ${it.name}`}
-                          className="h-8 w-8 rounded-xl hover:bg-rose-500/10 text-zinc-400 hover:text-rose-500 active:scale-95 transition-all"
+                          className="h-8 w-8 rounded-xl hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 active:scale-95 transition-all"
                           title="Hapus Barang"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

@@ -188,3 +188,11 @@ export function getEventTimeWarnings(setup?: string, start?: string, end?: strin
   if (s !== null && a !== null && s > a) out.push('Jam setup balon setelah jam acara dimulai.');
   return out;
 }
+
+/** Returns an error message when setup time is unusable, else null. Times are "HH:MM". */
+export function validateSetupTime(setupTime?: string, eventTime?: string): string | null {
+  if (!setupTime) return null;
+  if (setupTime === '00:00') return 'Jam setup 00:00 (tengah malam) kemungkinan salah. Mohon isi jam setup yang benar.';
+  if (eventTime && setupTime > eventTime) return 'Jam setup harus lebih awal dari jam mulai acara.';
+  return null;
+}

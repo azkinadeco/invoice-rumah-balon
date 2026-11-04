@@ -155,7 +155,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error: oauthError } = await supabaseAuthClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        // Land on a real page: '/' redirects server-side and would drop the ?code=
+        redirectTo: `${window.location.origin}/invoices`,
         queryParams: { prompt: 'select_account' },
       },
     });

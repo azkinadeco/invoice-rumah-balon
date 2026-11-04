@@ -1,6 +1,6 @@
 'use client';
 
-import { getEventTimeWarnings } from '@/lib/format';
+import { validateSetupTime, getEventTimeWarnings } from '@/lib/format';
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -82,6 +82,11 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const setupError = validateSetupTime(setupTime, eventTime);
+    if (setupError) {
+      alert(setupError);
+      return;
+    }
     if (
       timeWarnings.length > 0 &&
       !confirm(`Cek jam acara:\n• ${timeWarnings.join('\n• ')}\n\nTetap simpan?`)

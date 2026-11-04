@@ -22,6 +22,7 @@ export const SyncStatusBanner: React.FC<SyncStatusBannerProps> = ({
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [recentlySynced, setRecentlySynced] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const checkQueue = useCallback(() => {
     const queue = getPendingSyncQueue();
@@ -97,6 +98,45 @@ export const SyncStatusBanner: React.FC<SyncStatusBannerProps> = ({
     );
   }
 
+  if (isCollapsed) {
+    return (
+      <aside
+        aria-label="Peringatan Status Jaringan dan Sinkronisasi"
+        className="no-print py-1.5 px-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-2 text-xs text-amber-950 dark:text-amber-200 animate-in fade-in transition-all"
+      >
+        <div className="flex items-center gap-2 truncate">
+          {!isOnline ? (
+            <WifiOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+          ) : (
+            <CloudOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+          )}
+          <span className="truncate text-[11px] font-medium text-amber-900/90 dark:text-amber-200/90">
+            <strong>{!isOnline ? 'Offline' : 'Cloud Offline'}:</strong> Data tersimpan aman di browser {pendingCount > 0 ? `(${pendingCount} pending)` : ''}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={handleManualSync}
+            disabled={isSyncing}
+            className="text-[11px] font-bold text-[#4d3085] dark:text-[#c4b5fd] hover:underline px-1.5 py-0.5 rounded cursor-pointer disabled:opacity-50"
+          >
+            {isSyncing ? 'Menyinkronkan...' : 'Sinkronkan'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsCollapsed(false)}
+            aria-label="Tampilkan rincian status sinkronisasi"
+            className="text-amber-700 dark:text-amber-300 hover:text-amber-900 text-[11px] px-1.5 py-0.5 rounded hover:bg-amber-500/15 cursor-pointer font-medium"
+          >
+            Rincian
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside
       aria-label="Peringatan Status Jaringan dan Sinkronisasi"
@@ -127,17 +167,27 @@ export const SyncStatusBanner: React.FC<SyncStatusBannerProps> = ({
         </div>
       </div>
 
-      <Button
-        type="button"
-        size="sm"
-        onClick={handleManualSync}
-        disabled={isSyncing}
-        aria-label="Coba Hubungkan dan Sinkronkan ke Cloud Sekarang"
-        className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-[#4d3085] hover:opacity-95 text-white font-bold text-xs shrink-0 self-start sm:self-auto shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-      >
-        <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-        <span>{isSyncing ? 'Menghubungkan...' : 'Sinkronkan Sekarang'}</span>
-      </Button>
+      <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleManualSync}
+          disabled={isSyncing}
+          aria-label="Coba Hubungkan dan Sinkronkan ke Cloud Sekarang"
+          className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-[#4d3085] hover:opacity-95 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+          <span>{isSyncing ? 'Menghubungkan...' : 'Sinkronkan Sekarang'}</span>
+        </Button>
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(true)}
+          aria-label="Kecilkan banner peringatan"
+          className="text-amber-800/80 dark:text-amber-200/80 hover:text-amber-950 dark:hover:text-amber-100 text-xs px-2 py-1 rounded-lg hover:bg-amber-500/20 cursor-pointer font-medium transition-colors"
+        >
+          Kecilkan
+        </button>
+      </div>
     </aside>
   );
 };

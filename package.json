@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "node scripts/patch-html2canvas.js"
@@ -17,6 +17,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.5.0",
+    "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.60.0",

@@ -15,6 +15,14 @@ import {
 } from '@/components/ui/table';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { StatusPill } from '@/components/common/StatusPill';
+
+const INVOICE_STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'sent', label: 'Terkirim' },
+  { value: 'dp_paid', label: 'DP Masuk' },
+  { value: 'paid', label: 'Lunas ✨' },
+  { value: 'cancelled', label: 'Dibatalkan' },
+];
 import {
   Printer,
   Edit3,
@@ -30,14 +38,6 @@ import {
   Plus,
 } from 'lucide-react';
 
-const INVOICE_STATUS_OPTIONS = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'sent', label: 'Terkirim' },
-  { value: 'dp_paid', label: 'DP Masuk' },
-  { value: 'paid', label: 'Lunas' },
-  { value: 'cancelled', label: 'Dibatalkan' },
-];
-
 interface InvoiceTableViewProps {
   invoices: InvoiceData[];
   onPrintInvoice: (inv: InvoiceData) => void;
@@ -52,6 +52,65 @@ interface InvoiceTableViewProps {
   onQuickChangeStatus: (id: string, status: InvoiceStatus) => void;
   onCreateNewInvoice: () => void;
 }
+
+interface RowMenuProps {
+  inv: InvoiceData;
+  size: 'sm' | 'lg';
+  onDetail: (inv: InvoiceData) => void;
+  onPrint: (inv: InvoiceData) => void;
+  onMarkPaid: (inv: InvoiceData) => void;
+  onCrewSheet: (inv: InvoiceData) => void;
+  onDuplicate: (inv: InvoiceData) => void;
+  onDelete?: (id: string, num: string) => void;
+}
+
+const RowMenu: React.FC<RowMenuProps> = ({ inv, size, onDetail, onPrint, onMarkPaid, onCrewSheet, onDuplicate, onDelete }) => {
+  const item = `w-full text-left px-3 ${size === 'lg' ? 'py-3' : 'py-2'} text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer transition-colors`;
+  return (
+    <Popover>
+      <PopoverTrigger
+        type="button"
+        aria-label={`Menu Aksi Lainnya Invoice #${inv.invoiceNumber}`}
+        className={`${size === 'lg' ? 'h-11 w-11' : 'h-9 w-9'} rounded-xl border border-border text-foreground hover:bg-muted active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0`}
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </PopoverTrigger>
+      <PopoverContent closeOnClick align="end" className="w-60 p-1.5 space-y-0.5 rounded-2xl border-border bg-card shadow-xl">
+        <button type="button" onClick={() => onDetail(inv)} className={`${item} hover:bg-muted text-foreground`}>
+          <Eye className="w-4 h-4 text-muted-foreground" />
+          <span>Lihat Detail</span>
+        </button>
+        <button type="button" onClick={() => onPrint(inv)} className={`${item} hover:bg-[#f370a8]/10 text-[#be185d] dark:text-[#f472b6]`}>
+          <Printer className="w-4 h-4" />
+          <span>Preview & Cetak A5</span>
+        </button>
+        {inv.status !== 'paid' && (
+          <button type="button" onClick={() => onMarkPaid(inv)} className={`${item} hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400`}>
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Tandai Lunas Penuh ✨</span>
+          </button>
+        )}
+        <button type="button" onClick={() => onCrewSheet(inv)} className={`${item} hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd]`}>
+          <ClipboardCheck className="w-4 h-4 text-[#f370a8]" />
+          <span>Surat Tugas Kru & Packing</span>
+        </button>
+        <button type="button" onClick={() => onDuplicate(inv)} className={`${item} hover:bg-muted text-foreground`}>
+          <Copy className="w-4 h-4 text-muted-foreground" />
+          <span>Duplikat Invoice</span>
+        </button>
+        {onDelete && (
+          <>
+            <div className="h-px bg-border my-1" />
+            <button type="button" onClick={() => onDelete(inv.id, inv.invoiceNumber)} className={`${item} hover:bg-rose-500/10 text-rose-500`}>
+              <Trash2 className="w-4 h-4" />
+              <span>Hapus Invoice</span>
+            </button>
+          </>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
   invoices,
@@ -73,10 +132,19 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const menuProps = {
+    onDetail: onDetailInvoice,
+    onPrint: onPrintInvoice,
+    onMarkPaid: onQuickMarkPaid,
+    onCrewSheet: onOpenCrewSheet,
+    onDuplicate: onDuplicateInvoice,
+    onDelete: onDeleteInvoice,
+  };
+
   if (invoices.length === 0) {
     return (
-      <div className="p-8 sm:p-12 rounded-2xl border border-dashed border-border bg-card text-center space-y-3">
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-[#f370a8]/10 text-[#f370a8] flex items-center justify-center text-base font-black">
+      <div className="p-8 sm:p-12 rounded-3xl border border-border bg-card text-center space-y-3.5 shadow-sm">
+        <div className="w-14 h-14 mx-auto rounded-3xl bg-[#f370a8]/10 text-[#f370a8] flex items-center justify-center text-xl font-black shadow-inner">
           RB
         </div>
         <div className="text-base font-bold text-foreground">Tidak Ada Invoice Ditemukan</div>
@@ -87,7 +155,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
           type="button"
           onClick={onCreateNewInvoice}
           aria-label="Buat Invoice Baru Sekarang"
-          className="h-10 px-5 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white text-xs font-bold shadow-sm transition-colors active:scale-95"
+          className="h-10 px-5 rounded-2xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white text-xs font-bold shadow-md shadow-[#f370a8]/20 transition-all active:scale-95"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           <span>Buat Invoice Baru</span>
@@ -100,8 +168,8 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
     <div className="space-y-4">
       {/* ===================== CARD VIEW: mobile & tablet (< 1024px) ===================== */}
       {/* Ergonomic 44px+ touch targets designed for field admin on phones */}
-      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-2.5">
-        {invoices.map((inv) => {
+      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-3">
+        {invoices.map((inv, idx) => {
           const formattedPhone = formatWhatsAppPhone(inv.clientPhone);
           const isPaid = inv.status === 'paid';
           const dpPaid =
@@ -118,20 +186,20 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
           return (
             <div
               key={inv.id}
-              className="p-3.5 rounded-2xl bg-card border border-border shadow-2xs space-y-3"
+              style={{ animationDelay: `${idx * 40}ms` }}
+              className="p-4 rounded-3xl bg-card/90 backdrop-blur-xl border border-border/80 shadow-xs space-y-3 transition-all duration-300 hover:border-[#f370a8]/50 hover:shadow-md animate-in fade-in-50 slide-in-from-bottom-2"
             >
-              {/* Header: Number, Event Date & Status */}
+              {/* Header: Number, Event Date & Status Dropdown */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0 text-[11px] font-semibold text-muted-foreground">
-                  <span className="font-mono text-foreground">#{inv.invoiceNumber}</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-mono font-bold text-xs bg-muted/80 text-foreground px-2.5 py-1 rounded-xl border border-border">
+                    #{inv.invoiceNumber}
+                  </span>
                   {inv.bookingDate && (
-                    <>
-                      <span className="w-1 h-1 rounded-full bg-border shrink-0" />
-                      <span className="inline-flex items-center gap-1 truncate text-[#4d3085] dark:text-[#c4b5fd]">
-                        <PartyPopper className="w-3 h-3 text-[#f370a8] shrink-0" />
-                        {formatDateIndo(inv.bookingDate)}
-                      </span>
-                    </>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#4d3085] dark:text-[#c4b5fd] bg-[#4d3085]/15 px-2 py-0.5 rounded-lg border border-[#4d3085]/30 font-mono">
+                      <PartyPopper className="w-3 h-3 text-[#f370a8]" />
+                      {formatDateIndo(inv.bookingDate)}
+                    </span>
                   )}
                 </div>
 
@@ -145,10 +213,17 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
               </div>
 
               {/* Client & Price Details */}
-              <div className="flex items-start justify-between gap-3">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label={`Lihat detail invoice #${inv.invoiceNumber}`}
+                onClick={() => onDetailInvoice(inv)}
+                onKeyDown={(e) => e.key === 'Enter' && onDetailInvoice(inv)}
+                className="flex items-start justify-between gap-3 pt-1 cursor-pointer"
+              >
                 <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-2xs">
                       {getInitials(inv.clientName)}
                     </div>
                     <div className="font-bold text-sm text-foreground truncate">
@@ -161,8 +236,9 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                       href={formattedPhone ? `https://wa.me/${formattedPhone}` : undefined}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       aria-label={`Hubungi ${inv.clientName} via WhatsApp`}
-                      className="text-xs text-muted-foreground hover:text-emerald-600 flex items-center gap-1.5 font-mono pl-10 w-fit"
+                      className="text-xs text-muted-foreground hover:text-emerald-500 flex items-center gap-1.5 font-mono pl-10 transition-colors"
                     >
                       <Phone className="w-3.5 h-3.5 text-[#f370a8]" />
                       <span>{inv.clientPhone}</span>
@@ -175,7 +251,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                     </div>
                   )}
 
-                  <div className="text-[11px] text-foreground/80 truncate pl-10">
+                  <div className="text-[11px] text-muted-foreground truncate pl-10 pt-0.5">
                     {inv.items[0]?.description || '(Tanpa Item)'}
                     {inv.items.length > 1 && ` (+${inv.items.length - 1} item lainnya)`}
                   </div>
@@ -183,131 +259,56 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
                 {/* Price block */}
                 <div className="text-right shrink-0 font-mono">
-                  <div className="text-[15px] font-extrabold text-foreground tabular-nums">
+                  <div className="text-base font-black text-[#f370a8] dark:text-[#f472b6]">
                     {formatRupiah(inv.total)}
                   </div>
                   {isPaid ? (
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
-                      Lunas Penuh
+                    <span className="text-[11px] text-emerald-500 font-bold block mt-0.5">
+                      Lunas Penuh ✨
                     </span>
-                  ) : remainingAmount > 0 ? (
+                  ) : dpPaid > 0 && remainingAmount > 0 ? (
                     <div className="text-[10px] space-y-0.5 mt-0.5">
-                      {dpPaid > 0 && (
-                        <span className="text-[#4d3085] dark:text-[#c4b5fd] block">
-                          DP: {formatRupiah(dpPaid)}
-                        </span>
-                      )}
+                      <span className="text-[#4d3085] dark:text-[#c4b5fd] font-semibold block">
+                        DP: {formatRupiah(dpPaid)}
+                      </span>
                       <span className="text-rose-500 font-bold block">
                         Sisa: {formatRupiah(remainingAmount)}
                       </span>
                     </div>
-                  ) : null}
+                  ) : (
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium block mt-0.5">
+                      Belum ada DP
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Thumb-friendly mobile action buttons (44px height standard) */}
-              <div className="pt-3 border-t border-border flex items-center gap-1.5">
-                {/* 1-Tap WhatsApp */}
+              {/* Thumb-friendly mobile actions: 1 primary + edit + menu */}
+              <div className="pt-2.5 border-t border-border flex items-center gap-2">
                 <Button
                   type="button"
                   size="sm"
                   onClick={() => onSendWhatsApp(inv)}
                   aria-label={`Kirim WhatsApp ke ${inv.clientName || 'Pelanggan'}`}
-                  className="h-11 px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                  className="flex-1 h-11 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>WA</span>
+                  <span>Kirim WA</span>
                 </Button>
 
-                {/* Print A5 */}
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => onPrintInvoice(inv)}
-                  aria-label={`Cetak A5 Invoice #${inv.invoiceNumber}`}
-                  className="flex-1 h-11 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Cetak A5</span>
-                </Button>
-
-                {/* Edit */}
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => onEditInvoice(inv)}
                   aria-label={`Edit Invoice #${inv.invoiceNumber}`}
-                  className="h-11 w-11 px-0 rounded-xl border-border text-foreground hover:bg-muted text-xs font-bold active:scale-95 transition-all"
+                  className="h-11 px-4 rounded-2xl border-border text-foreground hover:bg-muted text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
                 >
                   <Edit3 className="w-4 h-4" />
-                  <span className="sr-only">Edit</span>
+                  <span>Edit</span>
                 </Button>
 
-                {/* Detail */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onDetailInvoice(inv)}
-                  aria-label={`Detail Pesanan Invoice #${inv.invoiceNumber}`}
-                  className="h-11 w-11 px-0 rounded-xl border-border text-foreground hover:bg-muted text-xs font-bold active:scale-95 transition-all"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span className="sr-only">Detail</span>
-                </Button>
-
-                {/* Popover More Options */}
-                <Popover>
-                  <PopoverTrigger
-                    type="button"
-                    aria-label={`Opsi Lainnya Invoice #${inv.invoiceNumber}`}
-                    className="h-11 w-11 shrink-0 rounded-xl border border-border text-foreground hover:bg-muted active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </PopoverTrigger>
-                  <PopoverContent closeOnClick align="end" className="w-56 p-1.5 space-y-0.5 rounded-xl border-border bg-card shadow-xl">
-                    {inv.status !== 'paid' && (
-                      <button
-                        type="button"
-                        onClick={() => onQuickMarkPaid(inv)}
-                        className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 cursor-pointer transition-colors"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Tandai Lunas Penuh</span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => onOpenCrewSheet(inv)}
-                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <ClipboardCheck className="w-4 h-4 text-[#f370a8]" />
-                      <span>Surat Tugas Kru & Packing</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDuplicateInvoice(inv)}
-                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-muted text-foreground flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <Copy className="w-4 h-4 text-muted-foreground" />
-                      <span>Duplikat Pesanan</span>
-                    </button>
-                    {onDeleteInvoice && (
-                      <>
-                    <div className="h-px bg-border my-1" />
-                    <button
-                      type="button"
-                      onClick={() => onDeleteInvoice(inv.id, inv.invoiceNumber)}
-                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-rose-500/10 text-rose-500 flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Hapus Invoice</span>
-                    </button>
-                      </>
-                    )}
-                  </PopoverContent>
-                </Popover>
+                <RowMenu {...menuProps} inv={inv} size="lg" />
               </div>
             </div>
           );
@@ -315,36 +316,33 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
       </div>
 
       {/* ===================== DESKTOP TABLE VIEW (>= 1024px) ===================== */}
-      <div className="hidden lg:block rounded-2xl border border-border bg-card overflow-hidden shadow-2xs">
+      <div className="hidden lg:block rounded-3xl border border-border/80 bg-card/90 backdrop-blur-xl overflow-hidden shadow-sm transition-all">
         <Table>
-          <TableHeader className="bg-muted/40">
+          <TableHeader className="bg-muted/40 border-b border-border/80">
             <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-5 w-28">
+              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider py-4 pl-6 w-32">
                 Invoice #
               </TableHead>
-              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider">
                 Pelanggan
               </TableHead>
-              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider">
                 Jadwal Acara
               </TableHead>
-              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                Layanan / Paket
-              </TableHead>
-              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider">
                 Status
               </TableHead>
-              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right pr-5">
+              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider text-right pr-6">
                 Total Tagihan
               </TableHead>
-              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right pr-5 w-52">
+              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider text-center w-40">
                 Aksi
               </TableHead>
             </TableRow>
           </TableHeader>
 
-          <TableBody className="divide-y divide-border">
-            {invoices.map((inv) => {
+          <TableBody className="divide-y divide-border/70">
+            {invoices.map((inv, idx) => {
               const formattedPhone = formatWhatsAppPhone(inv.clientPhone);
               const isPaid = inv.status === 'paid';
               const dpPaid =
@@ -361,11 +359,13 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
               return (
                 <TableRow
                   key={inv.id}
-                  className="border-border hover:bg-muted/40 transition-colors group"
+                  style={{ animationDelay: `${idx * 25}ms` }}
+                  onClick={() => onDetailInvoice(inv)}
+                  className="border-border/70 hover:bg-[#f370a8]/5 dark:hover:bg-[#f370a8]/8 transition-all duration-200 group animate-in fade-in-50 cursor-pointer"
                 >
                   {/* No. Invoice */}
-                  <TableCell className="py-3 pl-5">
-                    <span className="font-mono font-semibold text-xs text-foreground">
+                  <TableCell className="py-4 pl-6">
+                    <span className="font-mono font-bold text-xs text-foreground bg-muted/80 px-2.5 py-1 rounded-xl border border-border group-hover:border-[#f370a8]/50 group-hover:bg-card transition-all">
                       #{inv.invoiceNumber}
                     </span>
                   </TableCell>
@@ -373,18 +373,23 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   {/* Pelanggan */}
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs transition-transform duration-200">
                         {getInitials(inv.clientName)}
                       </div>
                       <div className="space-y-0.5">
-                        <div className="font-bold text-[13px] text-foreground">
+                        <div className="font-bold text-xs text-foreground group-hover:text-[#f370a8] transition-colors">
                           {inv.clientName || '(Tanpa Nama)'}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground max-w-[220px] truncate">
+                          {inv.items[0]?.description || '(Tanpa Item)'}
+                          {inv.items.length > 1 && ` (+${inv.items.length - 1})`}
                         </div>
                         {inv.clientPhone ? (
                           <a
                             href={formattedPhone ? `https://wa.me/${formattedPhone}` : undefined}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="text-[11px] text-muted-foreground hover:text-emerald-500 transition-colors flex items-center gap-1 font-mono"
                             aria-label={`Hubungi ${inv.clientName} via WhatsApp`}
                           >
@@ -403,25 +408,14 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
                   {/* Tanggal Acara */}
                   <TableCell>
-                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground whitespace-nowrap">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#4d3085]/15 dark:bg-[#4d3085]/25 text-[#4d3085] dark:text-[#c4b5fd] border border-[#4d3085]/30 text-xs font-bold font-mono">
                       <PartyPopper className="w-3.5 h-3.5 text-[#f370a8]" />
                       <span>{inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}</span>
                     </div>
                   </TableCell>
 
-                  {/* Rincian Paket */}
-                  <TableCell>
-                    <div className="text-xs text-foreground font-medium max-w-[220px] truncate" title={inv.items[0]?.description}>
-                      {inv.items[0]?.description || '(Tanpa Item)'}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground font-medium flex items-center gap-1 mt-0.5">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#f370a8]" />
-                      <span>{inv.items.length} item pesanan</span>
-                    </div>
-                  </TableCell>
-
                   {/* Status Payment Selector */}
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <StatusPill
                       value={inv.status}
                       options={INVOICE_STATUS_OPTIONS}
@@ -432,134 +426,53 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   </TableCell>
 
                   {/* Total Tagihan */}
-                  <TableCell className="text-right pr-5 tabular-nums">
-                    <div className="font-extrabold text-sm text-foreground">
+                  <TableCell className="text-right pr-6 font-mono whitespace-nowrap">
+                    <div className="font-black text-sm tracking-tight text-[#f370a8] dark:text-[#f472b6]">
                       {formatRupiah(inv.total)}
                     </div>
-                    {isPaid ? (
-                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
-                        Lunas Penuh
-                      </span>
-                    ) : remainingAmount > 0 ? (
-                      <div className="text-[11px] space-y-0.5 mt-0.5">
-                        {dpPaid > 0 && (
-                          <span className="text-[#4d3085] dark:text-[#c4b5fd] font-semibold block">
-                            DP: {formatRupiah(dpPaid)}
-                          </span>
-                        )}
-                        <span className="text-rose-500 font-bold block">
-                          Sisa: {formatRupiah(remainingAmount)}
+                    <div className="mt-1 flex items-center justify-end">
+                      {isPaid ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                          Lunas Penuh ✨
                         </span>
-                      </div>
-                    ) : null}
+                      ) : dpPaid > 0 && remainingAmount > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-[#4d3085] dark:text-[#c4b5fd] font-semibold bg-[#4d3085]/10 px-2 py-0.5 rounded-md">
+                          DP {formatRupiah(dpPaid)} • Sisa {formatRupiah(remainingAmount)}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium bg-amber-500/10 px-2 py-0.5 rounded-md">
+                          Belum ada DP
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
 
-                  {/* Aksi */}
-                  <TableCell className="pr-5">
-                    <div className="flex items-center justify-end gap-1">
-                      {/* Quick 1-click WhatsApp */}
+                  {/* Aksi: 1 primary + edit + menu */}
+                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-center gap-1.5">
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
                         onClick={() => onSendWhatsApp(inv)}
                         aria-label={`Kirim rincian invoice #${inv.invoiceNumber} ke WhatsApp`}
-                        className="h-8 w-8 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/15 transition-all active:scale-95"
+                        className="h-9 w-9 rounded-xl text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all active:scale-95"
                         title="Kirim rincian invoice ke WhatsApp pelanggan"
                       >
                         <MessageCircle className="w-4 h-4" />
                       </Button>
-
-                      {/* Print A5 */}
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => onPrintInvoice(inv)}
-                        aria-label={`Preview dan Cetak A5 Invoice #${inv.invoiceNumber}`}
-                        className="h-8 px-2.5 rounded-lg bg-[#f370a8]/12 hover:bg-[#f370a8]/22 text-[#be185d] dark:text-[#f472b6] active:scale-95 transition-colors font-bold text-xs flex items-center gap-1 border border-[#f370a8]/25"
-                        title="Preview & Cetak Format Standar A5"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                        <span>A5</span>
-                      </Button>
-
-                      {/* Edit */}
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => onEditInvoice(inv)}
                         aria-label={`Edit Invoice #${inv.invoiceNumber}`}
-                        className="h-8 w-8 rounded-lg hover:bg-muted text-foreground active:scale-95 transition-all"
+                        className="h-9 w-9 rounded-xl hover:bg-muted border border-border text-foreground active:scale-95 transition-all"
                         title="Edit Invoice"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
-
-                      {/* Detail */}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onDetailInvoice(inv)}
-                        aria-label={`Lihat Detail Invoice #${inv.invoiceNumber}`}
-                        className="h-8 w-8 rounded-lg hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] active:scale-95 transition-all"
-                        title="Lihat Detail Pesanan"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-
-                      {/* Secondary Menu Popover */}
-                      <Popover>
-                        <PopoverTrigger
-                          type="button"
-                          aria-label={`Menu Aksi Lainnya Invoice #${inv.invoiceNumber}`}
-                          className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-95 flex items-center justify-center cursor-pointer"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </PopoverTrigger>
-                        <PopoverContent closeOnClick align="end" className="w-56 p-1.5 space-y-0.5 rounded-xl border-border bg-card shadow-xl">
-                          {inv.status !== 'paid' && (
-                            <button
-                              type="button"
-                              onClick={() => onQuickMarkPaid(inv)}
-                              className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 cursor-pointer transition-colors"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>Tandai Lunas Penuh</span>
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => onOpenCrewSheet(inv)}
-                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] flex items-center gap-2 cursor-pointer transition-colors"
-                          >
-                            <ClipboardCheck className="w-4 h-4 text-[#f370a8]" />
-                            <span>Surat Tugas Kru & Packing</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onDuplicateInvoice(inv)}
-                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-muted text-foreground flex items-center gap-2 cursor-pointer transition-colors"
-                          >
-                            <Copy className="w-4 h-4 text-muted-foreground" />
-                            <span>Duplikat Invoice</span>
-                          </button>
-                          {onDeleteInvoice && (
-                            <>
-                          <div className="h-px bg-border my-1" />
-                          <button
-                            type="button"
-                            onClick={() => onDeleteInvoice(inv.id, inv.invoiceNumber)}
-                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-rose-500/10 text-rose-500 flex items-center gap-2 cursor-pointer transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span>Hapus Invoice</span>
-                          </button>
-                            </>
-                          )}
-                        </PopoverContent>
-                      </Popover>
+                      <RowMenu {...menuProps} inv={inv} size="sm" />
                     </div>
                   </TableCell>
                 </TableRow>

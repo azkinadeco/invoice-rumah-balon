@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { ServiceWorkerRegister } from '@/components/common/ServiceWorkerRegister';
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -40,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning className={`${inter.variable} antialiased`}>
+    <html lang="id" suppressHydrationWarning className={`${plusJakartaSans.variable} font-sans antialiased`}>
       <body className="min-h-screen bg-background text-foreground">
         {children}
         <ServiceWorkerRegister />

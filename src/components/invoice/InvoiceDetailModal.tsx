@@ -98,45 +98,54 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
           </Badge>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-5 py-4 pr-1 text-sm">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4 px-1 pb-10 text-sm">
           {/* Customer & Event Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-muted/30 border border-border">
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            {/* Kolom Kiri: Pelanggan & Lokasi */}
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-border/60">
                 <User className="w-3.5 h-3.5 text-[#f370a8]" />
-                Data Pelanggan
+                Data Pelanggan & Lokasi
               </div>
-              <div className="font-bold text-foreground text-sm">
-                {invoice.clientName || '(Tanpa Nama)'}
+              <div>
+                <div className="font-bold text-foreground text-sm">
+                  {invoice.clientName || '(Tanpa Nama)'}
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1 font-mono mt-0.5">
+                  <Phone className="w-3.5 h-3.5 text-[#f370a8]" />
+                  {invoice.clientPhone || '—'}
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
-                <Phone className="w-3.5 h-3.5 text-[#f370a8]" />
-                {invoice.clientPhone || '—'}
+
+              {(invoice.venue || invoice.clientAddress) && (
+                <div className="text-xs text-foreground flex items-start gap-1.5 pt-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#a78bfa] shrink-0 mt-0.5" />
+                  <span className="font-medium">{invoice.venue || invoice.clientAddress}</span>
+                </div>
+              )}
+
+              <div className="text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                Terbit: {invoice.invoiceDate ? formatDateIndo(invoice.invoiceDate) : '—'}
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            {/* Kolom Kanan: Detail Acara & Tim */}
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-border/60">
                 <Calendar className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#a78bfa]" />
-                Jadwal Acara & Terbit
+                Jadwal & Tim Dekor
               </div>
               <div className="font-bold text-[#f370a8] text-sm">
-                Acara: {invoice.bookingDate ? formatDateIndo(invoice.bookingDate) : '—'}
+                {invoice.bookingDate ? formatDateIndo(invoice.bookingDate) : '—'}
               </div>
               {invoice.eventTime && (
                 <div className="text-xs text-foreground font-mono font-semibold flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#f370a8]" />
+                  <Clock className="w-3.5 h-3.5 text-[#f370a8] shrink-0" />
                   <span>
-                    Acara: {invoice.eventTime}
+                    Pk {invoice.eventTime}
                     {invoice.eventEndTime ? ` - ${invoice.eventEndTime}` : ''}
                     {invoice.setupTime ? ` (Setup: ${invoice.setupTime})` : ''}
                   </span>
-                </div>
-              )}
-              {(invoice.venue || invoice.clientAddress) && (
-                <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#a78bfa] shrink-0" />
-                  <span className="truncate">{invoice.venue || invoice.clientAddress}</span>
                 </div>
               )}
               {invoice.themeNote && (
@@ -152,13 +161,10 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 </div>
               )}
               {invoice.crewNote && (
-                <div className="text-[11px] text-muted-foreground bg-muted/50 p-2 rounded-xl border border-border">
-                  <strong>Catatan Crew:</strong> {invoice.crewNote}
+                <div className="text-[11px] text-muted-foreground bg-muted/60 p-2 rounded-xl border border-border">
+                  <strong className="text-foreground">Catatan Crew:</strong> {invoice.crewNote}
                 </div>
               )}
-              <div className="text-xs text-muted-foreground">
-                Terbit: {invoice.invoiceDate ? formatDateIndo(invoice.invoiceDate) : '—'}
-              </div>
             </div>
           </div>
 
@@ -190,42 +196,48 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
           {/* Pricing calculations */}
           <div className="p-4 rounded-2xl bg-muted/40 border border-border space-y-2 text-xs">
-            <div className="flex justify-between items-center text-muted-foreground">
-              <span>Subtotal:</span>
-              <span className="font-mono font-semibold text-foreground">{formatRupiah(invoice.subtotal)}</span>
+            {(invoice.discount > 0 || invoice.tax > 0) && (
+              <>
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Subtotal:</span>
+                  <span className="font-mono font-semibold text-foreground">{formatRupiah(invoice.subtotal)}</span>
+                </div>
+                {invoice.discount > 0 && (
+                  <div className="flex justify-between items-center text-[#f370a8] font-semibold">
+                    <span>Diskon:</span>
+                    <span className="font-mono">- {formatRupiah(invoice.discount)}</span>
+                  </div>
+                )}
+                {invoice.tax > 0 && (
+                  <div className="flex justify-between items-center text-muted-foreground">
+                    <span>Pajak (Tax):</span>
+                    <span className="font-mono font-semibold">{formatRupiah(invoice.tax)}</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className={`flex justify-between items-center text-sm font-black text-foreground ${invoice.discount > 0 || invoice.tax > 0 ? 'pt-2 border-t-2 border-border' : ''}`}>
+              <span className="uppercase">Total Tagihan:</span>
+              <span className="font-mono text-xl text-foreground">{formatRupiah(invoice.total)}</span>
             </div>
-            {invoice.discount > 0 && (
-              <div className="flex justify-between items-center text-[#f370a8] font-semibold">
-                <span>Diskon:</span>
-                <span className="font-mono">- {formatRupiah(invoice.discount)}</span>
-              </div>
-            )}
-            {invoice.tax > 0 && (
-              <div className="flex justify-between items-center text-muted-foreground">
-                <span>Pajak (Tax):</span>
-                <span className="font-mono font-semibold">{formatRupiah(invoice.tax)}</span>
-              </div>
-            )}
+
             {hasDpPaid ? (
-              <div className="flex justify-between items-center text-[#4d3085] dark:text-[#c4b5fd] font-bold pt-1 border-t border-border">
+              <div className="flex justify-between items-center text-[#4d3085] dark:text-[#c4b5fd] font-bold pt-1.5 border-t border-border">
                 <span>DP yang Sudah Dibayar:</span>
                 <span className="font-mono text-sm text-[#4d3085] dark:text-[#c4b5fd]">
                   - {formatRupiah(dpPaid)}
                 </span>
               </div>
             ) : (
-              <div className="flex justify-between items-center text-[#4d3085] dark:text-[#c4b5fd] font-bold pt-1 border-t border-border">
+              <div className="flex justify-between items-center text-[#4d3085] dark:text-[#c4b5fd] font-bold pt-1.5 border-t border-border">
                 <span>Rekomendasi DP Minimal 30%:</span>
                 <span className="font-mono">{formatRupiah(Math.round(invoice.total * 0.3))}</span>
               </div>
             )}
-            <div className="flex justify-between items-center text-sm font-black text-foreground pt-2 border-t-2 border-border">
-              <span className="uppercase">Total Tagihan:</span>
-              <span className="font-mono text-xl text-foreground">{formatRupiah(invoice.total)}</span>
-            </div>
 
             {hasDpPaid && (
-              <div className="p-3 rounded-xl bg-card border border-border flex items-center justify-between shadow-2xs mt-1">
+              <div className="p-3 rounded-xl bg-card border border-border flex items-center justify-between shadow-2xs mt-2">
                 <div>
                   <span className="text-xs font-black uppercase tracking-wider block text-foreground">
                     {isPaid || remainingAmount === 0 ? 'Status Tagihan:' : 'Sisa Tagihan Belum Dibayar:'}
