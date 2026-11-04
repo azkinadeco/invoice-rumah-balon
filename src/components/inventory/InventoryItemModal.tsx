@@ -150,7 +150,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 sm:px-6 pt-5 sm:pt-6 space-y-4 text-xs">
           {/* Nama Barang */}
           <div className="space-y-1.5">
             <Label className="text-xs font-bold text-foreground">
@@ -388,7 +388,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
           </div>
 
           {/* Sticky Mobile/Desktop Footer */}
-          <DialogFooter className="sticky bottom-0 z-20 bg-card/95 backdrop-blur-md pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] border-t border-border flex flex-row items-center justify-between gap-2 mt-auto shrink-0 px-4 sm:px-6">
+          <DialogFooter className="sticky bottom-0 z-20 bg-card/95 backdrop-blur-md pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] border-t border-border flex flex-row items-center justify-between gap-2 mt-auto shrink-0 -mx-4 sm:-mx-6 px-4 sm:px-6">
             <Button
               type="button"
               variant="ghost"
@@ -399,7 +399,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
             </Button>
             <Button
               type="submit"
-              className="text-xs h-9 px-5 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+              className="text-xs h-10 px-5 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white font-bold shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 transition-colors"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{item ? 'Simpan Perubahan' : 'Tambahkan ke Stok'}</span>

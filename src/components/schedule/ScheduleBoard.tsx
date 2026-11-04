@@ -54,6 +54,14 @@ import { cn } from '@/lib/utils';
 import { ScheduleEditModal } from './ScheduleEditModal';
 import { CrewDispatchSheetModal } from './CrewDispatchSheetModal';
 import { ScheduleStats } from './ScheduleStats';
+import { StatusPill } from '@/components/common/StatusPill';
+
+const SCHEDULE_STATUS_OPTIONS = [
+  { value: 'scheduled', label: 'Dijadwalkan' },
+  { value: 'ready', label: 'Siap Dekor' },
+  { value: 'in_progress', label: 'Pengerjaan' },
+  { value: 'completed', label: 'Selesai' },
+];
 import { ScheduleCalendarView } from './ScheduleCalendarView';
 
 interface ScheduleBoardProps {
@@ -496,24 +504,24 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 sm:space-y-4">
       {/* ===================================================================== */}
       {/* 1. TOP HEADER CONTROLS (Ringkas, Ringan, Bisa Buka/Tutup)            */}
       {/* ===================================================================== */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 p-4 sm:p-5 rounded-3xl bg-card border border-border shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-card border border-border shadow-2xs">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-gradient-to-br from-[#f370a8] to-[#4d3085] text-white shadow-xs">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="p-1.5 rounded-lg bg-[#4d3085] text-white">
               <CalendarDays className="w-4 h-4" />
             </span>
-            <h1 className="text-lg sm:text-xl font-black tracking-tight text-foreground">
+            <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-foreground">
               Jadwal Pesanan Client
             </h1>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#f370a8]/15 text-[#f370a8]">
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#f370a8]/12 text-[#d6458a] dark:text-[#f472b6] whitespace-nowrap">
               {stats.monthTotal} Acara Bulan {MONTH_NAMES_ID[viewMonth]}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="hidden sm:block text-xs text-muted-foreground">
             Kelola agenda bulanan, jam mulai acara, jam setup balon, dan venue client secara rapi.
           </p>
         </div>
@@ -578,7 +586,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
             type="button"
             size="sm"
             onClick={onOpenNewInvoice}
-            className="h-9 px-3.5 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 text-xs flex items-center gap-1.5 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white font-bold shadow-sm text-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Tambah Pesanan</span>
@@ -667,16 +675,18 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
       {/* ===================================================================== */}
       {/* 4. SEARCH & STATUS FILTER BAR                                        */}
       {/* ===================================================================== */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="p-3.5 rounded-2xl bg-card border border-border shadow-2xs space-y-3">
+        {/* Row 1: search + export actions */}
+        <div className="flex items-center gap-2">
           {/* Search box */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 min-w-0">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari client, WhatsApp, venue, tema balon..."
-              className="pl-9 pr-8 h-10 rounded-xl bg-background border-border text-xs"
+              placeholder="Cari client, WhatsApp, venue, tema…"
+              aria-label="Cari jadwal"
+              className="pl-9 pr-8 h-10 rounded-xl bg-background/70 border-border text-sm"
             />
             {search && (
               <button
@@ -690,10 +700,46 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
             )}
           </div>
 
-          {/* Quick Date Chips (Hari Ini & Besok) & Status Filter */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Quick Day Chips */}
-            <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-xl border border-border/80">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCopyScheduleText}
+            className="h-10 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            title="Salin ringkasan agenda ke clipboard untuk dibagikan ke WhatsApp grup crew"
+          >
+            {copiedSchedule ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-[#f370a8]" />
+                <span className="text-[#f370a8] font-bold">Tersalin!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
+                <span className="hidden sm:inline">Salin Rekap WA</span>
+                <span className="sr-only sm:hidden">Rekap WA</span>
+              </>
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportScheduleCSV}
+            className="h-10 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            title="Ekspor seluruh daftar jadwal dekorasi ke file Excel / CSV"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
+            <span className="hidden sm:inline">Excel/CSV</span>
+            <span className="sr-only sm:hidden">CSV</span>
+          </Button>
+        </div>
+
+        {/* Row 2: date + status */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          {/* Quick Day Chips */}
+            <div role="group" aria-label="Filter tanggal" className="flex items-center gap-0.5 bg-muted/70 p-0.5 rounded-lg border border-border/70 shrink-0 self-start">
               <button
                 type="button"
                 onClick={() => {
@@ -701,7 +747,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   setSelectedCalendarDate(null);
                 }}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer',
+                  'h-7 px-2.5 text-xs rounded-md font-semibold transition-all cursor-pointer',
                   quickDateFilter === 'all' && !selectedCalendarDate
                     ? 'bg-card text-foreground shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -716,7 +762,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   setSelectedCalendarDate(null);
                 }}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1',
+                  'h-7 px-2.5 text-xs rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1',
                   quickDateFilter === 'today'
                     ? 'bg-[#f370a8] text-white shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -741,7 +787,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   setSelectedCalendarDate(null);
                 }}
                 className={cn(
-                  'px-2.5 py-1 text-xs rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1',
+                  'h-7 px-2.5 text-xs rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1',
                   quickDateFilter === 'tomorrow'
                     ? 'bg-[#4d3085] text-white shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
@@ -761,8 +807,10 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               </button>
             </div>
 
+          <div className="hidden sm:block w-px h-5 bg-border" />
+
             {/* Status filter chips */}
-            <div className="flex items-center gap-1 overflow-x-auto text-xs">
+            <div role="group" aria-label="Filter status" className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0 text-xs">
               {[
                 { id: 'all', label: 'Semua Status' },
                 { id: 'scheduled', label: 'Dijadwalkan' },
@@ -775,10 +823,10 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   type="button"
                   onClick={() => setStatusFilter(s.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
+                    'h-7 px-3 rounded-full border text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap',
                     statusFilter === s.id
-                      ? 'bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white shadow-xs'
-                      : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                      ? 'bg-[#4d3085] text-white border-transparent dark:bg-[#f370a8]'
+                      : 'bg-card text-muted-foreground border-border hover:text-foreground hover:bg-muted'
                   )}
                 >
                   {s.label}
@@ -786,45 +834,10 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               ))}
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCopyScheduleText}
-              className="h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
-              title="Salin ringkasan agenda ke clipboard untuk dibagikan ke WhatsApp grup crew"
-            >
-              {copiedSchedule ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-[#f370a8]" />
-                  <span className="text-[#f370a8] font-bold">Tersalin!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
-                  <span className="hidden sm:inline">Salin Rekap WA</span>
-                  <span className="sm:hidden">Rekap WA</span>
-                </>
-              )}
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleExportScheduleCSV}
-              className="h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-foreground flex items-center gap-1.5 shrink-0 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
-              title="Ekspor seluruh daftar jadwal dekorasi ke file Excel / CSV"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#c4b5fd]" />
-              <span className="hidden sm:inline">Excel/CSV</span>
-              <span className="sm:hidden">CSV</span>
-            </Button>
-          </div>
         </div>
 
         {/* Sub-Filters Kesiapan Properti & Balon */}
-        <div className="flex items-center gap-1.5 overflow-x-auto text-xs pt-2.5 border-t border-border/60">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0 text-xs pt-2.5 border-t border-border/60">
           <span className="font-bold text-muted-foreground shrink-0 mr-1 flex items-center gap-1 text-[11px]">
             <Boxes className="w-3.5 h-3.5 text-[#f370a8]" />
             <span>Kesiapan Properti:</span>
@@ -840,7 +853,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               type="button"
               onClick={() => setPropertyPrepFilter(pf.id as any)}
               className={cn(
-                'px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border',
+                'h-7 px-2.5 rounded-full text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap border',
                 propertyPrepFilter === pf.id
                   ? 'bg-[#4d3085] text-white border-[#4d3085] shadow-xs'
                   : 'bg-card text-muted-foreground border-border hover:text-foreground'
@@ -926,7 +939,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
               <div
                 key={inv.id}
                 className={cn(
-                  'p-4 sm:p-5 rounded-3xl border transition-all duration-200 bg-card hover:shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4',
+                  'p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 bg-card hover:shadow-sm flex flex-col gap-3',
                   isCancelled
                     ? 'opacity-65 border-dashed border-rose-300 dark:border-rose-900 bg-muted/15'
                     : dateInfo.isToday
@@ -999,20 +1012,14 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                         )}
                       </div>
 
-                      <select
+                      <StatusPill
                         value={inv.scheduleStatus || 'scheduled'}
-                        onChange={(e) => handleQuickChangeStatus(inv, e.target.value as ScheduleStatus)}
-                        className={cn(
-                          'px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 outline-none cursor-pointer transition-all',
-                          statusConfig.badge
-                        )}
+                        options={SCHEDULE_STATUS_OPTIONS}
+                        onChange={(v) => handleQuickChangeStatus(inv, v as ScheduleStatus)}
+                        badgeClassName={statusConfig.badge}
+                        ariaLabel={`Ubah status acara ${inv.clientName || ''}`}
                         title="Klik untuk langsung mengubah status pengerjaan acara"
-                      >
-                        <option value="scheduled" className="bg-card text-foreground">Dijadwalkan</option>
-                        <option value="ready" className="bg-card text-foreground">Siap Dekor</option>
-                        <option value="in_progress" className="bg-card text-foreground">Pengerjaan</option>
-                        <option value="completed" className="bg-card text-foreground">Selesai</option>
-                      </select>
+                      />
                     </div>
 
                     {/* Time, Setup, and Venue chips */}
@@ -1166,7 +1173,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                             href={generatePaymentReminderMessage(inv)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[10px] bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                            className="text-[10px] bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
                             title="Kirim pesan tagihan sisa pelunasan ke WhatsApp client"
                           >
                             <MessageCircle className="w-3 h-3" />
@@ -1179,13 +1186,13 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                 </div>
 
                 {/* Right / Bottom Action Buttons (Streamlined 2 Primary CTAs + Popover Menu) */}
-                <div className="flex items-center gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-border/80 w-full lg:w-auto justify-end flex-wrap">
+                <div className="flex items-center gap-2 pt-3 border-t border-border/80 w-full justify-end flex-wrap">
                   {/* Primary CTA 1: WhatsApp Confirmation */}
                   <a
                     href={generateWhatsAppMessage(inv)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 sm:flex-none h-9 px-3 rounded-xl bg-[#4d3085]/10 hover:bg-[#4d3085]/20 text-[#4d3085] dark:text-[#c4b5fd] font-bold text-xs flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+                    className="flex-1 sm:flex-none h-9 px-3 rounded-xl bg-[#4d3085]/10 hover:bg-[#4d3085]/20 text-[#4d3085] dark:text-[#c4b5fd] font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
                     title="Kirim konfirmasi jam ke WhatsApp client"
                   >
                     <MessageCircle className="w-4 h-4 text-[#f370a8]" />
@@ -1202,7 +1209,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                       setCrewSheetInvoice(inv);
                       setCrewSheetOpen(true);
                     }}
-                    className="flex-1 sm:flex-none h-9 px-3 rounded-xl border-[#4d3085]/30 bg-gradient-to-r from-[#4d3085]/5 to-[#f370a8]/10 hover:from-[#4d3085]/15 hover:to-[#f370a8]/20 text-[#4d3085] dark:text-[#c4b5fd] font-bold text-xs flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-2xs"
+                    className="flex-1 sm:flex-none h-9 px-3 rounded-xl border-[#4d3085]/30 bg-gradient-to-r from-[#4d3085]/5 to-[#f370a8]/10 hover:from-[#4d3085]/15 hover:to-[#f370a8]/20 text-[#4d3085] dark:text-[#c4b5fd] font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-2xs"
                     title="Buka Surat Tugas, Checklist Properti & Stok Balon Kru"
                     aria-label={`Buka Surat Tugas dan Checklist Properti Pesanan #${inv.invoiceNumber}`}
                   >
@@ -1222,7 +1229,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleQuickMarkPaid(inv)}
-                      className="h-9 w-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0"
+                      className="h-9 w-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 active:scale-95 transition-all shrink-0"
                       title="Catat Pelunasan Tagihan (Lunas Penuh ✨)"
                       aria-label={`Catat Pelunasan Tagihan #${inv.invoiceNumber}`}
                     >
@@ -1234,12 +1241,12 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                   <Popover>
                     <PopoverTrigger
                       aria-label={`Menu aksi tambahan untuk invoice #${inv.invoiceNumber}`}
-                      className="h-9 w-9 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+                      className="h-9 w-9 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
                       title="Aksi Tambahan"
                     >
                       <MoreVertical className="w-4 h-4" />
                     </PopoverTrigger>
-                    <PopoverContent align="end" className="w-48 p-1.5 space-y-0.5">
+                    <PopoverContent closeOnClick align="end" className="w-48 p-1.5 space-y-0.5">
                       <button
                         type="button"
                         onClick={() => onViewInvoice(inv)}
@@ -1457,7 +1464,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                               setCrewSheetOpen(true);
                             }}
                             className={cn(
-                              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border cursor-pointer hover:scale-105 active:scale-95 shadow-2xs',
+                              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 shadow-2xs',
                               inv.dispatchedProperties.every((p) => p.checkedIn)
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-400'
                                 : inv.dispatchedProperties.every((p) => p.checkedOut)
@@ -1495,20 +1502,14 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
 
                       {/* Status - Quick Switcher */}
                       <TableCell>
-                        <select
+                        <StatusPill
                           value={inv.scheduleStatus || 'scheduled'}
-                          onChange={(e) => handleQuickChangeStatus(inv, e.target.value as ScheduleStatus)}
-                          className={cn(
-                            'px-2 py-0.5 rounded-full text-[10px] font-bold border outline-none cursor-pointer transition-all',
-                            statusConfig.badge
-                          )}
+                          options={SCHEDULE_STATUS_OPTIONS}
+                          onChange={(v) => handleQuickChangeStatus(inv, v as ScheduleStatus)}
+                          badgeClassName={statusConfig.badge}
+                          ariaLabel={`Ubah status acara ${inv.clientName || ''}`}
                           title="Klik untuk langsung mengubah status acara"
-                        >
-                          <option value="scheduled" className="bg-card text-foreground">Dijadwalkan</option>
-                          <option value="ready" className="bg-card text-foreground">Siap Dekor</option>
-                          <option value="in_progress" className="bg-card text-foreground">Pengerjaan</option>
-                          <option value="completed" className="bg-card text-foreground">Selesai</option>
-                        </select>
+                        />
                       </TableCell>
 
                       {/* Aksi */}
@@ -1520,7 +1521,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                             href={generateWhatsAppMessage(inv)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/15 transition-all hover:scale-105 active:scale-95"
+                            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/15 transition-all active:scale-95"
                             title="Chat WhatsApp Client"
                             aria-label={`Hubungi WhatsApp client ${inv.clientName || ''}`}
                           >
@@ -1536,7 +1537,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                               setCrewSheetInvoice(inv);
                               setCrewSheetOpen(true);
                             }}
-                            className="h-8 w-8 text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/15 rounded-xl transition-all hover:scale-105 active:scale-95"
+                            className="h-8 w-8 text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/15 rounded-xl transition-all active:scale-95"
                             title="Buka Surat Tugas & Checklist Barang Lapangan"
                             aria-label={`Buka Surat Tugas dan Checklist #${inv.invoiceNumber}`}
                           >
@@ -1550,7 +1551,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                               variant="ghost"
                               size="icon"
                               onClick={() => handleQuickMarkPaid(inv)}
-                              className="h-8 w-8 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl transition-all hover:scale-105 active:scale-95"
+                              className="h-8 w-8 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl transition-all active:scale-95"
                               title="Tandai Sudah Lunas Penuh ✨"
                               aria-label={`Tandai Lunas Invoice #${inv.invoiceNumber}`}
                             >
@@ -1562,12 +1563,12 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                           <Popover>
                             <PopoverTrigger
                               aria-label={`Menu aksi tambahan untuk jadwal #${inv.invoiceNumber}`}
-                              className="h-8 w-8 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+                              className="h-8 w-8 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
                               title="Aksi Tambahan"
                             >
                               <MoreVertical className="w-4 h-4" />
                             </PopoverTrigger>
-                            <PopoverContent align="end" className="w-48 p-1.5 space-y-0.5 text-left">
+                            <PopoverContent closeOnClick align="end" className="w-48 p-1.5 space-y-0.5 text-left">
                               <button
                                 type="button"
                                 onClick={() => onViewInvoice(inv)}

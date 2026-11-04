@@ -1,5 +1,6 @@
 'use client';
 
+import { getEventTimeWarnings } from '@/lib/format';
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -77,8 +78,16 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     }
   }, [invoice, open]);
 
+  const timeWarnings = getEventTimeWarnings(setupTime, eventTime, eventEndTime);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (
+      timeWarnings.length > 0 &&
+      !confirm(`Cek jam acara:\n• ${timeWarnings.join('\n• ')}\n\nTetap simpan?`)
+    ) {
+      return;
+    }
     onSave({
       bookingDate,
       eventTime,
@@ -217,6 +226,14 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 />
               </div>
             </div>
+
+            {timeWarnings.length > 0 && (
+              <div role="alert" className="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] font-semibold text-amber-800 dark:text-amber-300 space-y-0.5">
+                {timeWarnings.map((w) => (
+                  <div key={w}>⚠ {w}</div>
+                ))}
+              </div>
+            )}
 
             {/* Quick Presets for Event Time */}
             <div>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { ServiceWorkerRegister } from '@/components/common/ServiceWorkerRegister';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -40,7 +41,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" suppressHydrationWarning className={`${inter.variable} antialiased`}>
-      <body className="min-h-screen bg-background text-foreground">{children}</body>
+      <body className="min-h-screen bg-background text-foreground">
+        {children}
+        <ServiceWorkerRegister />
+      </body>
     </html>
   );
 }

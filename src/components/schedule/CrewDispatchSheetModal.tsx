@@ -455,7 +455,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
               onClick={handleDownloadPng}
               disabled={isGeneratingImage || isGeneratingPdf}
               aria-label="Unduh lembar kerja format PNG"
-              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
+              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all"
             >
               {isGeneratingImage ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -472,7 +472,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf || isGeneratingImage}
               aria-label="Unduh lembar kerja format PDF A4"
-              className="h-9 px-3.5 text-xs rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105"
+              className="h-9 px-3.5 text-xs rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all"
             >
               {isGeneratingPdf ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -489,7 +489,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
               size="sm"
               onClick={handlePrint}
               aria-label="Cetak lembar kerja crew lapangan"
-              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
+              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all"
             >
               <Printer className="w-3.5 h-3.5 mr-1.5 text-foreground" />
               <span>Cetak A4</span>
@@ -502,7 +502,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
               size="sm"
               onClick={handleShareCrewWA}
               aria-label="Kirim lembar tugas dan checklist ke WhatsApp Crew"
-              className="h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-[#f370a8] flex items-center gap-1.5 shadow-2xs transition-all hover:scale-105"
+              className="h-9 px-3 rounded-xl border-border bg-card hover:bg-muted text-xs font-bold text-[#f370a8] flex items-center gap-1.5 shadow-2xs transition-all"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Kirim ke WA Crew</span>

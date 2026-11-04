@@ -32,24 +32,25 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
   const itemCount = data.items.length;
   
   // Dynamic scale tiers:
-  // Tier 1: 1-4 items (Spacious)
-  // Tier 2: 5-6 items (Compact)
-  // Tier 3: 7-8 items (Super Compact)
-  // Tier 4: 9+ items (Ultra Compact & Condensed)
-  const isTierCompact = itemCount >= 5 && itemCount <= 6;
-  const isTierSuperCompact = itemCount >= 7 && itemCount <= 8;
-  const isTierUltra = itemCount >= 9;
+  // Tier 1: 1-6 items (Spacious)
+  // Tier 2: 7-9 items (Compact)
+  // Tier 3: 10-12 items (Super Compact)
+  // Tier 4: 13+ items (Ultra Compact & Condensed)
+  const isTierCompact = itemCount >= 7 && itemCount <= 9;
+  const isTierSuperCompact = itemCount >= 10 && itemCount <= 12;
+  const isTierUltra = itemCount >= 13;
 
+  // Sizes tuned for print legibility on A5 (560px = 148mm, so 10.5px ≈ 8pt)
   const itemFontSize = isTierUltra
-    ? 'text-[7.2px]'
+    ? 'text-[8.4px]'
     : isTierSuperCompact
-    ? 'text-[7.8px]'
+    ? 'text-[9.2px]'
     : isTierCompact
-    ? 'text-[8.5px]'
-    : 'text-[9.5px]';
+    ? 'text-[9.8px]'
+    : 'text-[10.8px]';
 
   const itemPaddingY = isTierUltra
-    ? 'py-0.2'
+    ? 'py-px'
     : isTierSuperCompact
     ? 'py-0.5'
     : isTierCompact
@@ -63,12 +64,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
     : 'leading-snug';
 
   const itemQtySize = isTierUltra
-    ? 'text-[6.8px]'
+    ? 'text-[7.6px]'
     : isTierSuperCompact
-    ? 'text-[7.2px]'
+    ? 'text-[8.2px]'
     : isTierCompact
-    ? 'text-[7.8px]'
-    : 'text-[8.5px]';
+    ? 'text-[8.8px]'
+    : 'text-[9.5px]';
 
   const headerSpacing = isTierUltra
     ? 'pt-0.5 space-y-0'
@@ -145,26 +146,26 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                 />
               </div>
 
-              <div className={cn("space-y-0.5 font-medium text-[#2a2e30] flex-1", isTierUltra ? "text-[8.5px] leading-[1.35]" : "text-[9.5px] leading-[1.45]")}>
+              <div className={cn("space-y-0.5 font-medium text-[#2a2e30] flex-1", isTierUltra ? "text-[9.6px] leading-[1.35]" : "text-[10.6px] leading-[1.45]")}>
                 <div className="flex items-center">
-                  <span className="w-[72px] font-medium shrink-0">No</span>
+                  <span className="w-[74px] font-medium shrink-0">No</span>
                   <span>: {data.invoiceNumber || '—'}</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="w-[72px] font-medium shrink-0">Date</span>
+                  <span className="w-[74px] font-medium shrink-0">Date</span>
                   <span>: {data.invoiceDate ? formatDateIndo(data.invoiceDate) : '—'}</span>
                 </div>
-                <div className="flex items-center">
-                  <span className="w-[72px] font-medium shrink-0">Booking Date</span>
-                  <span className="whitespace-nowrap">: {data.bookingDate ? formatDateIndo(data.bookingDate) : '—'}{data.eventTime ? ` • ${data.eventTime} WIB` : ''}</span>
+                <div className="flex items-start">
+                  <span className="w-[74px] font-medium shrink-0">Booking Date</span>
+                  <span className="flex-1">: {data.bookingDate ? formatDateIndo(data.bookingDate) : '—'}{data.eventTime ? ` • ${data.eventTime} WIB` : ''}</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="w-[72px] font-medium shrink-0">Name</span>
+                  <span className="w-[74px] font-medium shrink-0">Name</span>
                   <span>: {data.clientName || '—'}</span>
                 </div>
                 {(data.venue || data.clientAddress) && (
                   <div className="flex items-start">
-                    <span className="w-[72px] font-medium shrink-0">Venue</span>
+                    <span className="w-[74px] font-medium shrink-0">Venue</span>
                     <span className="break-words leading-tight flex-1">: {data.venue || data.clientAddress}</span>
                   </div>
                 )}
@@ -174,17 +175,17 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
 
           {/* 2. Middle Section: Items Table + Subtotal + Tax (Pinned cleanly above TOTAL bar) */}
           <div className="flex-1 flex flex-col justify-between min-h-0 pt-2 pb-0.5">
-            {/* Table */}
-            <div className="overflow-hidden">
+            {/* Table (fills the free space so bigger text is not clipped early) */}
+            <div className="min-h-0 overflow-hidden">
               {/* Table Header */}
-              <div className="flex items-center text-[9px] font-bold text-[#2a2e30] pb-1 border-b-2 border-[#2a2e30] tracking-wider uppercase">
+              <div className="flex items-center text-[10px] font-bold text-[#2a2e30] pb-1 border-b-2 border-[#2a2e30] tracking-wider uppercase">
                 <div className="w-6 text-left font-bold">NO</div>
                 <div className="flex-1 px-1.5 text-left font-bold">DESCRIPTION</div>
-                <div className="w-20 text-right font-bold">SUBTOTAL</div>
+                <div className="w-[88px] text-right font-bold">SUBTOTAL</div>
               </div>
 
               {/* Items List (Auto-condensed to fit up to 12 items without overflowing) */}
-              <div className="divide-y divide-transparent pt-0.5 max-h-[220px] overflow-hidden">
+              <div className="pt-0.5">
                 {data.items.map((item, idx) => (
                   <div
                     key={item.id || idx}
@@ -201,14 +202,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                         </span>
                       ) : null}
                     </div>
-                    <div className="w-20 text-right font-medium whitespace-nowrap text-[#1a1c1e] pt-0.5">
+                    <div className="w-[88px] text-right font-medium whitespace-nowrap text-[#1a1c1e] pt-0.5">
                       {formatRupiah(item.amount)}
                     </div>
                   </div>
                 ))}
 
                 {data.items.length === 0 && (
-                  <div className="py-4 text-center text-zinc-400 italic text-[9.5px]">
+                  <div className="py-4 text-center text-zinc-400 italic text-[10.5px]">
                     Belum ada item pesanan ditambahkan
                   </div>
                 )}
@@ -216,7 +217,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
             </div>
 
             {/* Subtotal & Tax Area */}
-            <div className="relative pt-1 border-t" style={{ borderColor: 'rgba(77, 48, 133, 0.25)' }}>
+            <div className="relative shrink-0 pt-1 border-t" style={{ borderColor: 'rgba(77, 48, 133, 0.25)' }}>
               {/* Stempel LUNAS di atas Sub Total */}
               {isPaid && (
                 <div
@@ -253,13 +254,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
 
               {/* Min DP notice line */}
               <div className="flex items-center justify-between pb-0.5">
-                <span className="text-[8px] font-medium text-[#e11d48] tracking-tight">
+                <span className="text-[9px] font-medium text-[#e11d48] tracking-tight">
                   {data.minDpNote || '( Min Dp 30% of price ,atau sesuai dengan kesepakatan )'}
                 </span>
               </div>
 
               {/* Subtotal, Tax, and DP Row */}
-              <div className="space-y-0.5 text-[9.5px]">
+              <div className="space-y-0.5 text-[10.5px]">
                 <div className="flex items-center justify-between font-semibold">
                   <span className="tracking-wide text-[#2a2e30]">SUB TOTAL</span>
                   <span className="text-[#2a2e30] font-medium">
@@ -280,10 +281,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                     className="flex items-center justify-between font-bold text-[#4d3085] pt-0.5 border-t border-dashed"
                     style={{ borderColor: 'rgba(77, 48, 133, 0.25)' }}
                   >
-                    <span className="tracking-wide text-[8.5px] uppercase flex items-center gap-1">
+                    <span className="tracking-wide text-[9.5px] uppercase flex items-center gap-1">
                       {isPaid ? 'SUDAH DIBAYAR (LUNAS)' : 'DP (UANG MUKA MASUK)'}
                     </span>
-                    <span className="font-bold text-[9.5px]">
+                    <span className="font-bold text-[10.5px]">
                       - {formatRupiah(dpPaid)}
                     </span>
                   </div>
@@ -300,28 +301,28 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
             {hasDpPaid ? (
               <>
                 <div className="flex items-center gap-1">
-                  <span className="text-[13px] tracking-wider uppercase font-extrabold">
+                  <span className="text-[14px] tracking-wider uppercase font-extrabold">
                     {isPaid || remainingAmount === 0 ? 'STATUS: LUNAS' : 'SISA TAGIHAN'}
                   </span>
                   {!isPaid && remainingAmount > 0 && (
                     <span
-                      className="text-[8px] font-semibold px-1 py-0.2 rounded-xs"
+                      className="text-[9px] font-semibold px-1 py-px rounded-xs"
                       style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
                     >
                       (Pelunasan H-1)
                     </span>
                   )}
                 </div>
-                <span className="text-[13.5px] font-extrabold tracking-tight">
+                <span className="text-[15px] font-extrabold tracking-tight">
                   {isPaid || remainingAmount === 0 ? 'LUNAS ✨' : formatRupiah(remainingAmount)}
                 </span>
               </>
             ) : (
               <>
-                <span className="text-[13.5px] tracking-wider uppercase font-extrabold">
+                <span className="text-[15px] tracking-wider uppercase font-extrabold">
                   TOTAL
                 </span>
-                <span className="text-[13.5px] font-extrabold tracking-tight">
+                <span className="text-[15px] font-extrabold tracking-tight">
                   {formatRupiah(data.total)}
                 </span>
               </>
@@ -332,8 +333,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
         {/* ==================== BOTTOM SECTION (Notes & Thank You) ==================== */}
         <div className="absolute top-[636px] left-0 w-[356px] pl-7 pr-3.5 z-10">
           {/* Notes */}
-          <div className="text-[8px] leading-[1.35] text-[#4d3085] font-medium space-y-0.5 max-w-[300px]">
-            <div className="font-bold text-[8.5px]">Note:</div>
+          <div className="text-[9px] leading-[1.35] text-[#4d3085] font-medium space-y-0.5 max-w-[314px]">
+            <div className="font-bold text-[9.6px]">Note:</div>
             {data.notes.map((note, nIdx) => (
               <div key={nIdx} className="whitespace-normal">
                 {note}
@@ -358,12 +359,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
             </div>
 
             {/* Colorful Balloon Bunch Graphic */}
-            <div className="relative w-16 h-20 shrink-0">
+            <div className="relative w-14 h-16 shrink-0">
               <Image
                 src="/images/balloon_bunch.png"
                 alt="Balloons"
                 fill
-                sizes="64px"
+                sizes="56px"
                 className="object-contain object-bottom"
                 priority
               />
@@ -391,17 +392,17 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
           <div className="my-auto space-y-3.5 py-2">
             {/* Invoice to */}
             <div className="space-y-0.5">
-              <div className="text-[11px] font-bold text-white uppercase tracking-wider">
+              <div className="text-[12.5px] font-bold text-white uppercase tracking-wider">
                 Invoice to
               </div>
-              <div className="text-[10.5px] font-medium text-white">
+              <div className="text-[12px] font-semibold text-white">
                 {data.clientName ? `(${data.clientName})` : '(Name client)'}
               </div>
-              <div className="text-[9.5px] font-normal text-white">
+              <div className="text-[11px] font-normal text-white">
                 {data.clientPhone ? `(${data.clientPhone})` : '(No telefon)'}
               </div>
               {(data.venue || data.clientAddress) && (
-                <div className="text-[8.5px] font-medium text-white leading-snug pt-1 px-1.5 break-words max-w-[176px] mx-auto">
+                <div className="text-[9.6px] font-medium text-white leading-snug pt-1 px-1.5 break-words max-w-[176px] mx-auto">
                   📍 {data.venue || data.clientAddress}
                 </div>
               )}
@@ -409,13 +410,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
 
             {/* Payment Method */}
             <div className="space-y-0.5">
-              <div className="text-[11px] font-bold text-white tracking-wider">
+              <div className="text-[12.5px] font-bold text-white tracking-wider">
                 Payment Method
               </div>
-              <div className="text-[10px] font-semibold text-white">
+              <div className="text-[11.5px] font-semibold text-white">
                 {data.bankName || 'BCA'} {data.bankAccountNumber || '0123456789'}
               </div>
-              <div className="text-[9.5px] font-normal text-white">
+              <div className="text-[10.5px] font-normal text-white">
                 a/n {data.bankAccountName || 'Rumah Balon'}
               </div>
 
@@ -430,7 +431,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                       className="w-14 h-14 object-contain rounded"
                     />
                   </div>
-                  <span className="text-[7.5px] font-black text-white/90 uppercase tracking-widest mt-0.5">
+                  <span className="text-[8px] font-black text-white/90 uppercase tracking-widest mt-0.5">
                     Scan QRIS BCA / All E-Wallet
                   </span>
                 </div>
@@ -440,7 +441,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
 
           {/* Bottom Social Media & Contact */}
           <div className="space-y-1 pb-1">
-            <div className="flex items-center justify-center gap-1.5 text-[9.5px] font-medium text-white">
+            <div className="flex items-center justify-center gap-1.5 text-[10.5px] font-medium text-white">
               <span className="w-1.5 h-1.5 rounded-full bg-white" />
               <span>
                 {data.contactIg
@@ -448,7 +449,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                   : '@rumahbalon_mlg'}
               </span>
             </div>
-            <div className="text-[9.5px] font-medium text-white">
+            <div className="text-[10.5px] font-medium text-white">
               {data.contactWa || '+62 857-8612-1897'}
             </div>
           </div>

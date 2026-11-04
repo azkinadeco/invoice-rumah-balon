@@ -261,12 +261,12 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="text-xs text-muted-foreground hover:text-foreground h-9 px-3 rounded-xl cursor-pointer"
+            className="hidden sm:inline-flex text-xs text-muted-foreground hover:text-foreground h-9 px-3 rounded-xl cursor-pointer"
           >
             Tutup
           </Button>
 
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="grid grid-cols-2 sm:flex sm:flex-nowrap items-center gap-1.5 py-0.5">
             {onDuplicate && (
               <Button
                 type="button"
@@ -276,7 +276,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   onClose();
                   onDuplicate(invoice);
                 }}
-                className="text-xs h-9 px-3 rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105 active:scale-95"
+                className="text-xs h-10 sm:h-9 px-3 rounded-xl border-border text-foreground hover:bg-muted font-bold transition-colors active:scale-95"
                 title="Buat salinan invoice ini sebagai draft baru"
               >
                 <Copy className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" /> Duplikat
@@ -292,7 +292,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   onClose();
                   onOpenCrewSheet(invoice);
                 }}
-                className="text-xs h-9 px-3.5 rounded-xl border-[#4d3085]/30 text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/10 font-bold transition-all hover:scale-105 active:scale-95"
+                className="text-xs h-10 sm:h-9 px-3.5 rounded-xl border-[#4d3085]/30 text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/10 font-bold transition-colors active:scale-95"
                 title="Buka Lembar Kerja & Checklist Alat Lapangan"
               >
                 <ClipboardCheck className="w-3.5 h-3.5 mr-1.5 text-[#f370a8]" /> Checklist Crew
@@ -304,7 +304,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               variant="outline"
               size="sm"
               onClick={handleSendWhatsApp}
-              className="text-xs h-9 px-3.5 rounded-xl border-[#4d3085]/30 text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/10 font-bold transition-all hover:scale-105 active:scale-95"
+              className="text-xs h-10 sm:h-9 px-3.5 rounded-xl border-[#4d3085]/30 text-[#4d3085] dark:text-[#c4b5fd] hover:bg-[#4d3085]/10 font-bold transition-colors active:scale-95"
             >
               <Send className="w-3.5 h-3.5 mr-1.5" /> WhatsApp
             </Button>
@@ -317,7 +317,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 onClose();
                 onPrint(invoice);
               }}
-              className="text-xs h-9 px-3.5 rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105 active:scale-95"
+              className="text-xs h-10 sm:h-9 px-3.5 rounded-xl border-border text-foreground hover:bg-muted font-bold transition-colors active:scale-95"
             >
               <Printer className="w-3.5 h-3.5 mr-1.5 text-foreground" /> Cetak (A5)
             </Button>
@@ -329,7 +329,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 onClose();
                 onEdit(invoice);
               }}
-              className="text-xs h-9 px-4 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-extrabold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105 active:scale-95"
+              className="col-span-2 text-xs h-10 sm:h-9 px-4 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white font-bold shadow-sm transition-colors active:scale-95"
             >
               <Edit3 className="w-3.5 h-3.5 mr-1.5" /> Edit Invoice
             </Button>

@@ -463,7 +463,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
               onClick={handleCopyImageToClipboard}
               disabled={isCopyingImage}
               aria-label="Salin Gambar Invoice ke Clipboard untuk langsung dipaste di WhatsApp"
-              className={`h-9 px-3 text-xs rounded-xl border-border font-bold transition-all hover:scale-105 ${
+              className={`h-9 px-3 text-xs rounded-xl border-border font-bold transition-all ${
                 copiedImageSuccess
                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                   : 'text-foreground hover:bg-muted'
@@ -488,7 +488,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
               onClick={handleDownloadPng}
               disabled={isGeneratingImage}
               aria-label="Unduh Invoice dalam Format Gambar PNG"
-              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
+              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all"
             >
               {isGeneratingImage ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -506,7 +506,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf}
               aria-label="Unduh Invoice dalam Format PDF A5 Resmi"
-              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
+              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all"
             >
               {isGeneratingPdf ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -523,7 +523,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
               size="sm"
               onClick={handlePrint}
               aria-label="Cetak Lembar Invoice Ukuran Kertas A5"
-              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all hover:scale-105"
+              className="h-9 px-3 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold transition-all"
             >
               <Printer className="w-3.5 h-3.5 mr-1.5 text-foreground" />
               Cetak A5
@@ -535,7 +535,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
               size="sm"
               onClick={() => handleSendWhatsApp()}
               aria-label="Kirim Rincian Tagihan Invoice ke WhatsApp Klien"
-              className="h-9 px-4 text-xs rounded-xl bg-gradient-to-r from-emerald-500 to-[#4d3085] hover:opacity-95 text-white font-extrabold shadow-md shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              className="h-9 px-4 text-xs rounded-xl bg-gradient-to-r from-emerald-500 to-[#4d3085] hover:opacity-95 text-white font-extrabold shadow-md shadow-emerald-500/20 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               <span>Kirim WA</span>

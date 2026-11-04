@@ -5,18 +5,29 @@ import { InventoryItem } from '@/types/inventory';
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://clyczvltkiervbtfzlmd.supabase.co';
 export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_CJI9V74lBLk6WIBIGrCVzQ_oRoT4GOW';
 
-const headers = {
-  apikey: SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  'Content-Type': 'application/json',
-  Prefer: 'return=representation,resolution=merge-duplicates',
-};
+// Access token of the signed-in employee (set by AuthProvider). Row Level
+// Security on the database only lets registered staff read / write data, so
+// every request must carry the user's token instead of just the anon key.
+let accessToken: string | null = null;
+
+export function setSupabaseAccessToken(token: string | null) {
+  accessToken = token;
+}
+
+function getHeaders(): Record<string, string> {
+  return {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${accessToken || SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json',
+    Prefer: 'return=representation,resolution=merge-duplicates',
+  };
+}
 
 const QUEUE_KEY = 'rb_pending_sync_queue';
 
 export interface PendingSyncItem {
   id: string;
-  type: 'invoice' | 'inventory' | 'settings' | 'delete_invoice';
+  type: 'invoice' | 'inventory' | 'settings' | 'delete_invoice' | 'delete_inventory';
   payload: any;
   timestamp: number;
 }
@@ -65,7 +76,7 @@ export async function checkSupabaseHealth(): Promise<boolean> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_invoices?select=id&limit=1`, {
-      headers,
+      headers: getHeaders(),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -84,7 +95,7 @@ export async function fetchInvoicesFromCloud(): Promise<InvoiceData[] | null> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_invoices?select=*&order=updated_at.desc`, {
-      headers,
+      headers: getHeaders(),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -104,7 +115,7 @@ export async function saveInvoiceToCloud(invoice: InvoiceData): Promise<boolean>
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_invoices`, {
       method: 'POST',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify({
         id: invoice.id,
         invoice_number: invoice.invoiceNumber,
@@ -131,7 +142,7 @@ export async function deleteInvoiceFromCloud(id: string): Promise<boolean> {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_invoices?id=eq.${id}`, {
       method: 'DELETE',
-      headers,
+      headers: getHeaders(),
     });
     if (!res.ok) {
       addToPendingSyncQueue({ id, type: 'delete_invoice', payload: { id } });
@@ -161,7 +172,7 @@ export async function batchSyncInvoicesToCloud(invoices: InvoiceData[]): Promise
     const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_invoices`, {
       method: 'POST',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify(rows),
       signal: controller.signal,
     });
@@ -187,7 +198,7 @@ export async function fetchInventoryFromCloud(): Promise<InventoryItem[] | null>
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_inventory?select=*&order=updated_at.desc`, {
-      headers,
+      headers: getHeaders(),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -215,7 +226,7 @@ export async function batchSyncInventoryToCloud(items: InventoryItem[]): Promise
     const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_inventory`, {
       method: 'POST',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify(rows),
       signal: controller.signal,
     });
@@ -223,6 +234,25 @@ export async function batchSyncInventoryToCloud(items: InventoryItem[]): Promise
     return res.ok;
   } catch (err) {
     console.warn('Supabase batch sync inventory error:', err);
+    return false;
+  }
+}
+
+// 6b. Delete Inventory item from Supabase (queued for retry when offline)
+export async function deleteInventoryFromCloud(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_inventory?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      addToPendingSyncQueue({ id, type: 'delete_inventory', payload: { id } });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Supabase delete inventory error (queued):', err);
+    addToPendingSyncQueue({ id, type: 'delete_inventory', payload: { id } });
     return false;
   }
 }
@@ -236,7 +266,7 @@ export async function fetchSettingsFromCloud(): Promise<BusinessSettings | null>
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_settings?id=eq.default_settings&select=*`, {
-      headers,
+      headers: getHeaders(),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -254,7 +284,7 @@ export async function saveSettingsToCloud(settings: BusinessSettings): Promise<b
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rb_settings`, {
       method: 'POST',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify({
         id: 'default_settings',
         data: settings,
@@ -286,6 +316,8 @@ export async function flushPendingSyncQueue(): Promise<{ success: boolean; count
         ok = await saveInvoiceToCloud(item.payload);
       } else if (item.type === 'delete_invoice') {
         ok = await deleteInvoiceFromCloud(item.id);
+      } else if (item.type === 'delete_inventory') {
+        ok = await deleteInventoryFromCloud(item.id);
       } else if (item.type === 'inventory') {
         ok = await batchSyncInventoryToCloud([item.payload]);
       } else if (item.type === 'settings') {

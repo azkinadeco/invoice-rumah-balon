@@ -14,6 +14,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { StatusPill } from '@/components/common/StatusPill';
 import {
   Printer,
   Edit3,
@@ -29,6 +30,14 @@ import {
   Plus,
 } from 'lucide-react';
 
+const INVOICE_STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'sent', label: 'Terkirim' },
+  { value: 'dp_paid', label: 'DP Masuk' },
+  { value: 'paid', label: 'Lunas' },
+  { value: 'cancelled', label: 'Dibatalkan' },
+];
+
 interface InvoiceTableViewProps {
   invoices: InvoiceData[];
   onPrintInvoice: (inv: InvoiceData) => void;
@@ -38,7 +47,8 @@ interface InvoiceTableViewProps {
   onQuickMarkPaid: (inv: InvoiceData) => void;
   onOpenCrewSheet: (inv: InvoiceData) => void;
   onDuplicateInvoice: (inv: InvoiceData) => void;
-  onDeleteInvoice: (id: string, num: string) => void;
+  /** Admin only: omit to hide the delete action. */
+  onDeleteInvoice?: (id: string, num: string) => void;
   onQuickChangeStatus: (id: string, status: InvoiceStatus) => void;
   onCreateNewInvoice: () => void;
 }
@@ -65,8 +75,8 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
   if (invoices.length === 0) {
     return (
-      <div className="p-8 sm:p-12 rounded-3xl border border-border bg-card text-center space-y-3.5 shadow-sm">
-        <div className="w-14 h-14 mx-auto rounded-3xl bg-[#f370a8]/10 text-[#f370a8] flex items-center justify-center text-xl font-black shadow-inner">
+      <div className="p-8 sm:p-12 rounded-2xl border border-dashed border-border bg-card text-center space-y-3">
+        <div className="w-12 h-12 mx-auto rounded-2xl bg-[#f370a8]/10 text-[#f370a8] flex items-center justify-center text-base font-black">
           RB
         </div>
         <div className="text-base font-bold text-foreground">Tidak Ada Invoice Ditemukan</div>
@@ -77,7 +87,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
           type="button"
           onClick={onCreateNewInvoice}
           aria-label="Buat Invoice Baru Sekarang"
-          className="h-10 px-5 rounded-2xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white text-xs font-bold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105 active:scale-95"
+          className="h-10 px-5 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white text-xs font-bold shadow-sm transition-colors active:scale-95"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           <span>Buat Invoice Baru</span>
@@ -88,9 +98,9 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* ===================== MOBILE CARDS VIEW (< 768px) ===================== */}
+      {/* ===================== CARD VIEW: mobile & tablet (< 1024px) ===================== */}
       {/* Ergonomic 44px+ touch targets designed for field admin on phones */}
-      <div className="sm:hidden space-y-3.5">
+      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-2.5">
         {invoices.map((inv) => {
           const formattedPhone = formatWhatsAppPhone(inv.clientPhone);
           const isPaid = inv.status === 'paid';
@@ -108,41 +118,37 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
           return (
             <div
               key={inv.id}
-              className="p-4 rounded-3xl bg-card border border-border shadow-xs space-y-3 transition-all hover:border-[#f370a8]/40"
+              className="p-3.5 rounded-2xl bg-card border border-border shadow-2xs space-y-3"
             >
-              {/* Header: Number, Event Date & Status Dropdown */}
+              {/* Header: Number, Event Date & Status */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-mono font-bold text-xs bg-muted/80 text-foreground px-2.5 py-1 rounded-xl border border-border">
-                    #{inv.invoiceNumber}
-                  </span>
+                <div className="flex items-center gap-2 min-w-0 text-[11px] font-semibold text-muted-foreground">
+                  <span className="font-mono text-foreground">#{inv.invoiceNumber}</span>
                   {inv.bookingDate && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#4d3085] dark:text-[#c4b5fd] bg-[#4d3085]/10 px-2 py-0.5 rounded-lg border border-[#4d3085]/20 font-mono">
-                      <PartyPopper className="w-3 h-3 text-[#f370a8]" />
-                      {formatDateIndo(inv.bookingDate)}
-                    </span>
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-border shrink-0" />
+                      <span className="inline-flex items-center gap-1 truncate text-[#4d3085] dark:text-[#c4b5fd]">
+                        <PartyPopper className="w-3 h-3 text-[#f370a8] shrink-0" />
+                        {formatDateIndo(inv.bookingDate)}
+                      </span>
+                    </>
                   )}
                 </div>
 
-                <select
+                <StatusPill
                   value={inv.status}
-                  onChange={(e) => onQuickChangeStatus(inv.id, e.target.value as InvoiceStatus)}
-                  aria-label={`Ubah status invoice #${inv.invoiceNumber}`}
-                  className={`${STATUS_COLORS[inv.status]?.badge} text-[11px] font-bold py-1.5 px-3 rounded-full outline-none cursor-pointer shadow-xs transition-all`}
-                >
-                  <option value="draft" className="bg-card text-foreground">Draft</option>
-                  <option value="sent" className="bg-card text-foreground">Terkirim</option>
-                  <option value="dp_paid" className="bg-card text-foreground">DP Masuk</option>
-                  <option value="paid" className="bg-card text-foreground">Lunas ✨</option>
-                  <option value="cancelled" className="bg-card text-foreground">Dibatalkan</option>
-                </select>
+                  options={INVOICE_STATUS_OPTIONS}
+                  onChange={(v) => onQuickChangeStatus(inv.id, v as InvoiceStatus)}
+                  badgeClassName={STATUS_COLORS[inv.status]?.badge}
+                  ariaLabel={`Ubah status invoice #${inv.invoiceNumber}`}
+                />
               </div>
 
               {/* Client & Price Details */}
-              <div className="flex items-start justify-between gap-3 pt-1">
+              <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-[11px] flex items-center justify-center shrink-0 shadow-2xs">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
                       {getInitials(inv.clientName)}
                     </div>
                     <div className="font-bold text-sm text-foreground truncate">
@@ -156,7 +162,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                       target="_blank"
                       rel="noreferrer"
                       aria-label={`Hubungi ${inv.clientName} via WhatsApp`}
-                      className="text-xs text-muted-foreground hover:text-emerald-500 flex items-center gap-1.5 font-mono pl-10"
+                      className="text-xs text-muted-foreground hover:text-emerald-600 flex items-center gap-1.5 font-mono pl-10 w-fit"
                     >
                       <Phone className="w-3.5 h-3.5 text-[#f370a8]" />
                       <span>{inv.clientPhone}</span>
@@ -169,7 +175,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                     </div>
                   )}
 
-                  <div className="text-[11px] text-muted-foreground truncate pl-10 pt-0.5">
+                  <div className="text-[11px] text-foreground/80 truncate pl-10">
                     {inv.items[0]?.description || '(Tanpa Item)'}
                     {inv.items.length > 1 && ` (+${inv.items.length - 1} item lainnya)`}
                   </div>
@@ -177,18 +183,20 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
                 {/* Price block */}
                 <div className="text-right shrink-0 font-mono">
-                  <div className="text-base font-black text-[#f370a8] dark:text-[#f472b6]">
+                  <div className="text-[15px] font-extrabold text-foreground tabular-nums">
                     {formatRupiah(inv.total)}
                   </div>
                   {isPaid ? (
-                    <span className="text-[11px] text-emerald-500 font-bold block mt-0.5">
-                      Lunas Penuh ✨
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
+                      Lunas Penuh
                     </span>
                   ) : remainingAmount > 0 ? (
                     <div className="text-[10px] space-y-0.5 mt-0.5">
-                      <span className="text-[#4d3085] dark:text-[#c4b5fd] block">
-                        DP: {formatRupiah(dpPaid)}
-                      </span>
+                      {dpPaid > 0 && (
+                        <span className="text-[#4d3085] dark:text-[#c4b5fd] block">
+                          DP: {formatRupiah(dpPaid)}
+                        </span>
+                      )}
                       <span className="text-rose-500 font-bold block">
                         Sisa: {formatRupiah(remainingAmount)}
                       </span>
@@ -198,14 +206,14 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
               </div>
 
               {/* Thumb-friendly mobile action buttons (44px height standard) */}
-              <div className="pt-2.5 border-t border-border flex items-center gap-2">
+              <div className="pt-3 border-t border-border flex items-center gap-1.5">
                 {/* 1-Tap WhatsApp */}
                 <Button
                   type="button"
                   size="sm"
                   onClick={() => onSendWhatsApp(inv)}
                   aria-label={`Kirim WhatsApp ke ${inv.clientName || 'Pelanggan'}`}
-                  className="h-11 px-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                  className="h-11 px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>WA</span>
@@ -217,7 +225,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   size="sm"
                   onClick={() => onPrintInvoice(inv)}
                   aria-label={`Cetak A5 Invoice #${inv.invoiceNumber}`}
-                  className="flex-1 h-11 rounded-2xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] text-white text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                  className="flex-1 h-11 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
                 >
                   <Printer className="w-4 h-4" />
                   <span>Cetak A5</span>
@@ -230,7 +238,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   size="sm"
                   onClick={() => onEditInvoice(inv)}
                   aria-label={`Edit Invoice #${inv.invoiceNumber}`}
-                  className="h-11 px-3.5 rounded-2xl border-border text-foreground hover:bg-muted text-xs font-bold active:scale-95 transition-all"
+                  className="h-11 w-11 px-0 rounded-xl border-border text-foreground hover:bg-muted text-xs font-bold active:scale-95 transition-all"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span className="sr-only">Edit</span>
@@ -243,7 +251,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   size="sm"
                   onClick={() => onDetailInvoice(inv)}
                   aria-label={`Detail Pesanan Invoice #${inv.invoiceNumber}`}
-                  className="h-11 px-3.5 rounded-2xl border-border text-foreground hover:bg-muted text-xs font-bold active:scale-95 transition-all"
+                  className="h-11 w-11 px-0 rounded-xl border-border text-foreground hover:bg-muted text-xs font-bold active:scale-95 transition-all"
                 >
                   <Eye className="w-4 h-4" />
                   <span className="sr-only">Detail</span>
@@ -254,25 +262,25 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   <PopoverTrigger
                     type="button"
                     aria-label={`Opsi Lainnya Invoice #${inv.invoiceNumber}`}
-                    className="h-11 w-11 rounded-2xl border border-border text-foreground hover:bg-muted active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+                    className="h-11 w-11 shrink-0 rounded-xl border border-border text-foreground hover:bg-muted active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
                   >
                     <MoreHorizontal className="w-4 h-4" />
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-56 p-1.5 space-y-1 rounded-2xl border-border bg-card shadow-xl">
+                  <PopoverContent closeOnClick align="end" className="w-56 p-1.5 space-y-0.5 rounded-xl border-border bg-card shadow-xl">
                     {inv.status !== 'paid' && (
                       <button
                         type="button"
                         onClick={() => onQuickMarkPaid(inv)}
-                        className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-xl hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 cursor-pointer transition-colors"
+                        className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 cursor-pointer transition-colors"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Tandai Lunas Penuh ✨</span>
+                        <span>Tandai Lunas Penuh</span>
                       </button>
                     )}
                     <button
                       type="button"
                       onClick={() => onOpenCrewSheet(inv)}
-                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-xl hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] flex items-center gap-2 cursor-pointer transition-colors"
+                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] flex items-center gap-2 cursor-pointer transition-colors"
                     >
                       <ClipboardCheck className="w-4 h-4 text-[#f370a8]" />
                       <span>Surat Tugas Kru & Packing</span>
@@ -280,20 +288,24 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onDuplicateInvoice(inv)}
-                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-xl hover:bg-muted text-foreground flex items-center gap-2 cursor-pointer transition-colors"
+                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-muted text-foreground flex items-center gap-2 cursor-pointer transition-colors"
                     >
                       <Copy className="w-4 h-4 text-muted-foreground" />
                       <span>Duplikat Pesanan</span>
                     </button>
+                    {onDeleteInvoice && (
+                      <>
                     <div className="h-px bg-border my-1" />
                     <button
                       type="button"
                       onClick={() => onDeleteInvoice(inv.id, inv.invoiceNumber)}
-                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-xl hover:bg-rose-500/10 text-rose-500 flex items-center gap-2 cursor-pointer transition-colors"
+                      className="w-full text-left px-3 py-2.5 text-xs font-bold rounded-lg hover:bg-rose-500/10 text-rose-500 flex items-center gap-2 cursor-pointer transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>Hapus Invoice</span>
                     </button>
+                      </>
+                    )}
                   </PopoverContent>
                 </Popover>
               </div>
@@ -302,30 +314,30 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
         })}
       </div>
 
-      {/* ===================== DESKTOP TABLE VIEW (>= 768px) ===================== */}
-      <div className="hidden sm:block rounded-3xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* ===================== DESKTOP TABLE VIEW (>= 1024px) ===================== */}
+      <div className="hidden lg:block rounded-2xl border border-border bg-card overflow-hidden shadow-2xs">
         <Table>
           <TableHeader className="bg-muted/40">
             <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider py-4 pl-6 w-32">
+              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-5 w-28">
                 Invoice #
               </TableHead>
-              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider">
+              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Pelanggan
               </TableHead>
-              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider">
+              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Jadwal Acara
               </TableHead>
-              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider">
+              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Layanan / Paket
               </TableHead>
-              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider">
+              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Status
               </TableHead>
-              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider text-right pr-6">
+              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right pr-5">
                 Total Tagihan
               </TableHead>
-              <TableHead className="text-xs font-bold text-foreground uppercase tracking-wider text-center w-48">
+              <TableHead className="h-11 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right pr-5 w-52">
                 Aksi
               </TableHead>
             </TableRow>
@@ -352,8 +364,8 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   className="border-border hover:bg-muted/40 transition-colors group"
                 >
                   {/* No. Invoice */}
-                  <TableCell className="py-4 pl-6">
-                    <span className="font-mono font-bold text-xs text-foreground bg-muted/70 px-2.5 py-1 rounded-xl border border-border group-hover:border-[#f370a8]/40 transition-colors">
+                  <TableCell className="py-3 pl-5">
+                    <span className="font-mono font-semibold text-xs text-foreground">
                       #{inv.invoiceNumber}
                     </span>
                   </TableCell>
@@ -361,11 +373,11 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   {/* Pelanggan */}
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4d3085] to-[#f370a8] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
                         {getInitials(inv.clientName)}
                       </div>
                       <div className="space-y-0.5">
-                        <div className="font-bold text-xs text-foreground group-hover:text-[#f370a8] transition-colors">
+                        <div className="font-bold text-[13px] text-foreground">
                           {inv.clientName || '(Tanpa Nama)'}
                         </div>
                         {inv.clientPhone ? (
@@ -391,7 +403,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
                   {/* Tanggal Acara */}
                   <TableCell>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#4d3085]/10 dark:bg-[#4d3085]/20 text-[#4d3085] dark:text-[#c4b5fd] border border-[#4d3085]/25 text-xs font-bold">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground whitespace-nowrap">
                       <PartyPopper className="w-3.5 h-3.5 text-[#f370a8]" />
                       <span>{inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}</span>
                     </div>
@@ -399,7 +411,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
                   {/* Rincian Paket */}
                   <TableCell>
-                    <div className="text-xs text-foreground font-semibold max-w-[200px] truncate">
+                    <div className="text-xs text-foreground font-medium max-w-[220px] truncate" title={inv.items[0]?.description}>
                       {inv.items[0]?.description || '(Tanpa Item)'}
                     </div>
                     <div className="text-[11px] text-muted-foreground font-medium flex items-center gap-1 mt-0.5">
@@ -410,34 +422,31 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
 
                   {/* Status Payment Selector */}
                   <TableCell>
-                    <select
+                    <StatusPill
                       value={inv.status}
-                      onChange={(e) => onQuickChangeStatus(inv.id, e.target.value as InvoiceStatus)}
-                      aria-label={`Ubah status invoice #${inv.invoiceNumber}`}
-                      className={`${STATUS_COLORS[inv.status]?.badge} text-[11px] font-bold py-1 px-2.5 rounded-full outline-none cursor-pointer shadow-xs transition-all`}
-                    >
-                      <option value="draft" className="bg-card text-foreground">Draft</option>
-                      <option value="sent" className="bg-card text-foreground">Terkirim</option>
-                      <option value="dp_paid" className="bg-card text-foreground">DP Terbayar</option>
-                      <option value="paid" className="bg-card text-foreground">Lunas ✨</option>
-                      <option value="cancelled" className="bg-card text-foreground">Dibatalkan</option>
-                    </select>
+                      options={INVOICE_STATUS_OPTIONS}
+                      onChange={(v) => onQuickChangeStatus(inv.id, v as InvoiceStatus)}
+                      badgeClassName={STATUS_COLORS[inv.status]?.badge}
+                      ariaLabel={`Ubah status invoice #${inv.invoiceNumber}`}
+                    />
                   </TableCell>
 
                   {/* Total Tagihan */}
-                  <TableCell className="text-right pr-6 font-mono">
-                    <div className="font-black text-sm text-[#f370a8] dark:text-[#f472b6]">
+                  <TableCell className="text-right pr-5 tabular-nums">
+                    <div className="font-extrabold text-sm text-foreground">
                       {formatRupiah(inv.total)}
                     </div>
                     {isPaid ? (
-                      <span className="text-[10px] text-emerald-500 font-bold block mt-0.5">
-                        Lunas Penuh ✨
+                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">
+                        Lunas Penuh
                       </span>
                     ) : remainingAmount > 0 ? (
-                      <div className="text-[10px] space-y-0.5 mt-0.5">
-                        <span className="text-[#4d3085] dark:text-[#c4b5fd] font-semibold block">
-                          DP: {formatRupiah(dpPaid)}
-                        </span>
+                      <div className="text-[11px] space-y-0.5 mt-0.5">
+                        {dpPaid > 0 && (
+                          <span className="text-[#4d3085] dark:text-[#c4b5fd] font-semibold block">
+                            DP: {formatRupiah(dpPaid)}
+                          </span>
+                        )}
                         <span className="text-rose-500 font-bold block">
                           Sisa: {formatRupiah(remainingAmount)}
                         </span>
@@ -446,8 +455,8 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                   </TableCell>
 
                   {/* Aksi */}
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-1.5">
+                  <TableCell className="pr-5">
+                    <div className="flex items-center justify-end gap-1">
                       {/* Quick 1-click WhatsApp */}
                       <Button
                         type="button"
@@ -455,7 +464,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                         variant="ghost"
                         onClick={() => onSendWhatsApp(inv)}
                         aria-label={`Kirim rincian invoice #${inv.invoiceNumber} ke WhatsApp`}
-                        className="h-8 w-8 rounded-xl text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/15 transition-all hover:scale-105 active:scale-95"
+                        className="h-8 w-8 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/15 transition-all active:scale-95"
                         title="Kirim rincian invoice ke WhatsApp pelanggan"
                       >
                         <MessageCircle className="w-4 h-4" />
@@ -467,7 +476,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                         size="sm"
                         onClick={() => onPrintInvoice(inv)}
                         aria-label={`Preview dan Cetak A5 Invoice #${inv.invoiceNumber}`}
-                        className="h-8 px-2.5 rounded-xl bg-[#f370a8]/15 hover:bg-[#f370a8]/25 text-[#be185d] dark:text-[#f472b6] hover:scale-105 active:scale-95 transition-all font-bold text-xs flex items-center gap-1 border border-[#f370a8]/30 shadow-2xs"
+                        className="h-8 px-2.5 rounded-lg bg-[#f370a8]/12 hover:bg-[#f370a8]/22 text-[#be185d] dark:text-[#f472b6] active:scale-95 transition-colors font-bold text-xs flex items-center gap-1 border border-[#f370a8]/25"
                         title="Preview & Cetak Format Standar A5"
                       >
                         <Printer className="w-3.5 h-3.5" />
@@ -481,7 +490,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                         size="icon"
                         onClick={() => onEditInvoice(inv)}
                         aria-label={`Edit Invoice #${inv.invoiceNumber}`}
-                        className="h-8 w-8 rounded-xl hover:bg-muted text-foreground hover:scale-105 active:scale-95 transition-all"
+                        className="h-8 w-8 rounded-lg hover:bg-muted text-foreground active:scale-95 transition-all"
                         title="Edit Invoice"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -494,7 +503,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                         size="icon"
                         onClick={() => onDetailInvoice(inv)}
                         aria-label={`Lihat Detail Invoice #${inv.invoiceNumber}`}
-                        className="h-8 w-8 rounded-xl hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] hover:scale-105 active:scale-95 transition-all"
+                        className="h-8 w-8 rounded-lg hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] active:scale-95 transition-all"
                         title="Lihat Detail Pesanan"
                       >
                         <Eye className="w-4 h-4" />
@@ -505,25 +514,25 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                         <PopoverTrigger
                           type="button"
                           aria-label={`Menu Aksi Lainnya Invoice #${inv.invoiceNumber}`}
-                          className="h-8 w-8 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
+                          className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-95 flex items-center justify-center cursor-pointer"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="w-56 p-1.5 space-y-1 rounded-2xl border-border bg-card shadow-xl">
+                        <PopoverContent closeOnClick align="end" className="w-56 p-1.5 space-y-0.5 rounded-xl border-border bg-card shadow-xl">
                           {inv.status !== 'paid' && (
                             <button
                               type="button"
                               onClick={() => onQuickMarkPaid(inv)}
-                              className="w-full text-left px-3 py-2 text-xs font-bold rounded-xl hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 cursor-pointer transition-colors"
+                              className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-2 cursor-pointer transition-colors"
                             >
                               <CheckCircle2 className="w-4 h-4" />
-                              <span>Tandai Lunas Penuh ✨</span>
+                              <span>Tandai Lunas Penuh</span>
                             </button>
                           )}
                           <button
                             type="button"
                             onClick={() => onOpenCrewSheet(inv)}
-                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-xl hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] flex items-center gap-2 cursor-pointer transition-colors"
+                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-[#4d3085]/10 text-[#4d3085] dark:text-[#c4b5fd] flex items-center gap-2 cursor-pointer transition-colors"
                           >
                             <ClipboardCheck className="w-4 h-4 text-[#f370a8]" />
                             <span>Surat Tugas Kru & Packing</span>
@@ -531,20 +540,24 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onDuplicateInvoice(inv)}
-                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-xl hover:bg-muted text-foreground flex items-center gap-2 cursor-pointer transition-colors"
+                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-muted text-foreground flex items-center gap-2 cursor-pointer transition-colors"
                           >
                             <Copy className="w-4 h-4 text-muted-foreground" />
                             <span>Duplikat Invoice</span>
                           </button>
+                          {onDeleteInvoice && (
+                            <>
                           <div className="h-px bg-border my-1" />
                           <button
                             type="button"
                             onClick={() => onDeleteInvoice(inv.id, inv.invoiceNumber)}
-                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-xl hover:bg-rose-500/10 text-rose-500 flex items-center gap-2 cursor-pointer transition-colors"
+                            className="w-full text-left px-3 py-2 text-xs font-bold rounded-lg hover:bg-rose-500/10 text-rose-500 flex items-center gap-2 cursor-pointer transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                             <span>Hapus Invoice</span>
                           </button>
+                            </>
+                          )}
                         </PopoverContent>
                       </Popover>
                     </div>

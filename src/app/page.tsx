@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { InvoiceData, BusinessSettings, InvoiceStatus } from '@/types/invoice';
 import { InventoryItem } from '@/types/inventory';
 import { DEFAULT_INVOICE, DEFAULT_BUSINESS_SETTINGS, DEFAULT_INVENTORY_ITEMS } from '@/lib/constants';
-import { exportInvoicesToCSV, formatWhatsAppPhone, formatDateIndo, formatRupiah } from '@/lib/format';
+import { exportInvoicesToCSV, formatWhatsAppPhone, formatDateIndo, formatRupiah, getNextInvoiceNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
@@ -15,7 +15,10 @@ import { SyncStatusBanner } from '@/components/common/SyncStatusBanner';
 import { InvoiceStatsHeader } from '@/components/invoice/InvoiceStatsHeader';
 import { InvoiceFilterToolbar } from '@/components/invoice/InvoiceFilterToolbar';
 import { InvoiceTableView } from '@/components/invoice/InvoiceTableView';
-import { Sparkles } from 'lucide-react';
+import { PaymentReminderPanel } from '@/components/invoice/PaymentReminderPanel';
+import { AuthProvider, useAuth } from '@/lib/auth';
+import { AuthGate } from '@/components/auth/AuthGate';
+import { Sparkles, X } from 'lucide-react';
 import {
   fetchInvoicesFromCloud,
   saveInvoiceToCloud,
@@ -23,6 +26,8 @@ import {
   batchSyncInvoicesToCloud,
   fetchInventoryFromCloud,
   batchSyncInventoryToCloud,
+  deleteInventoryFromCloud,
+  getPendingSyncQueue,
 } from '@/lib/supabase';
 
 // Dynamic lazy-loaded modals for maximum initial load performance
@@ -42,12 +47,29 @@ const BusinessSettingsModal = dynamic(
   () => import('@/components/invoice/BusinessSettingsModal').then((mod) => mod.BusinessSettingsModal),
   { ssr: false }
 );
+const StaffManagerModal = dynamic(
+  () => import('@/components/auth/StaffManagerModal').then((mod) => mod.StaffManagerModal),
+  { ssr: false }
+);
 const CrewDispatchSheetModal = dynamic(
   () => import('@/components/schedule/CrewDispatchSheetModal').then((mod) => mod.CrewDispatchSheetModal),
   { ssr: false }
 );
 
 export default function Home() {
+  return (
+    <AuthProvider>
+      <AuthGate>
+        <StudioApp />
+      </AuthGate>
+    </AuthProvider>
+  );
+}
+
+function StudioApp() {
+  const auth = useAuth();
+  const isAdmin = auth.isAdmin;
+  const [staffOpen, setStaffOpen] = useState(false);
   const [invoices, setInvoices] = useState<InvoiceData[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'invoices' | 'schedule' | 'inventory'>('invoices');
@@ -253,6 +275,13 @@ export default function Home() {
   };
 
   const syncInventoryItems = (list: InventoryItem[]) => {
+    // Items removed locally must also be removed from the cloud,
+    // otherwise they come back on the next reload.
+    const nextIds = new Set(list.map((it) => it.id));
+    inventoryItems
+      .filter((it) => !nextIds.has(it.id))
+      .forEach((it) => deleteInventoryFromCloud(it.id));
+
     setInventoryItems(list);
     try {
       localStorage.setItem('rb_inventory_items', JSON.stringify(list));
@@ -267,7 +296,7 @@ export default function Home() {
 
   // Create Invoice
   const handleCreateNewInvoice = () => {
-    const newNumber = Math.floor(1000 + Math.random() * 9000).toString();
+    const newNumber = getNextInvoiceNumber(invoices);
     const today = new Date().toISOString().split('T')[0];
 
     let currentSettings = DEFAULT_BUSINESS_SETTINGS;
@@ -282,7 +311,7 @@ export default function Home() {
       ...DEFAULT_INVOICE,
       ...currentSettings,
       id: `rb-${Date.now()}`,
-      invoiceNumber: `00${newNumber}`,
+      invoiceNumber: newNumber,
       invoiceDate: today,
       bookingDate: today,
       clientName: '',
@@ -338,12 +367,12 @@ export default function Home() {
 
   // Duplicate Invoice
   const handleDuplicateInvoice = (inv: InvoiceData) => {
-    const newNumber = Math.floor(1000 + Math.random() * 9000).toString();
+    const newNumber = getNextInvoiceNumber(invoices);
     const today = new Date().toISOString().split('T')[0];
     const duplicated: InvoiceData = {
       ...inv,
       id: `rb-${Date.now()}`,
-      invoiceNumber: `00${newNumber}`,
+      invoiceNumber: newNumber,
       invoiceDate: today,
       status: 'draft',
       dpPaidAmount: 0,
@@ -379,6 +408,7 @@ export default function Home() {
 
   // Delete Invoice
   const handleDeleteInvoice = (id: string, num: string) => {
+    if (!isAdmin) return;
     if (confirm(`Yakin ingin menghapus invoice #${num}?`)) {
       const nextList = invoices.filter((i) => i.id !== id);
       syncInvoices(nextList);
@@ -480,6 +510,26 @@ export default function Home() {
     showToast(`Membuka WhatsApp untuk invoice #${inv.invoiceNumber} 💬`);
   };
 
+  // WhatsApp reminder for the remaining balance (pelunasan H-1)
+  const handleSendPaymentReminder = (inv: InvoiceData, remaining: number) => {
+    const phone = formatWhatsAppPhone(inv.clientPhone);
+    const message = `Halo Kak ${inv.clientName || 'Pelanggan'}! 😊🎈\n\nKami dari *Rumah Balon Decoration* ingin mengingatkan pelunasan untuk acara Kakak:\n📄 *No. Invoice:* #${inv.invoiceNumber}\n📅 *Tanggal Acara:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}\n📍 *Lokasi:* ${inv.venue || inv.clientAddress || '—'}\n\n⏳ *Sisa Tagihan:* *${formatRupiah(remaining)}*\n(Pelunasan maksimal H-1 acara)\n\nTransfer ke Rekening Resmi:\n🏦 *${inv.bankName} ${inv.bankAccountNumber}*\na/n *${inv.bankAccountName}*\n\nMohon kirim bukti transfer setelah pembayaran ya Kak. Terima kasih! ✨`;
+    const encoded = encodeURIComponent(message);
+    window.open(phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`, '_blank');
+    showToast(`Membuka WhatsApp pengingat untuk #${inv.invoiceNumber} 💬`);
+  };
+
+  // Sign out (warn if there are offline changes that would be lost)
+  const handleSignOut = async () => {
+    const pending = getPendingSyncQueue().length;
+    const msg =
+      pending > 0
+        ? `Masih ada ${pending} perubahan yang BELUM tersinkron ke Cloud dan akan hilang jika keluar sekarang.\n\nTetap keluar?`
+        : 'Keluar dari akun ini? Data di perangkat ini akan dibersihkan.';
+    if (!confirm(msg)) return;
+    await auth.signOut();
+  };
+
   // Export CSV
   const handleExportCSV = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -514,8 +564,18 @@ export default function Home() {
 
   // Import Backup JSON
   const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) return;
     const file = e.target.files?.[0];
+    // Reset so choosing the same file again still triggers onChange
+    e.target.value = '';
     if (!file) return;
+    if (
+      !confirm(
+        `Pulihkan data dari "${file.name}"?\n\nSemua invoice & stok saat ini akan DIGANTI dengan isi file backup (juga di Cloud). Disarankan unduh backup terbaru dulu.`
+      )
+    ) {
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -544,6 +604,7 @@ export default function Home() {
 
   // Save Store Settings
   const handleSaveSettings = (settings: BusinessSettings, setAsDefault: boolean) => {
+    if (!isAdmin) return;
     if (setAsDefault) {
       try {
         localStorage.setItem('rb_business_profile', JSON.stringify(settings));
@@ -622,7 +683,10 @@ export default function Home() {
       <AdminHeader
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenSettings={() => setSettingsOpen(true)}
+        onOpenSettings={isAdmin ? () => setSettingsOpen(true) : undefined}
+        onOpenStaffManager={isAdmin ? () => setStaffOpen(true) : undefined}
+        user={{ email: auth.email, name: auth.name, avatarUrl: auth.avatarUrl, role: auth.role }}
+        onSignOut={handleSignOut}
         onNewInvoice={handleCreateNewInvoice}
         theme={theme}
         onToggleTheme={handleToggleTheme}
@@ -633,7 +697,7 @@ export default function Home() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 mt-1 sm:mt-2 pb-28 sm:pb-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 pt-3 sm:pt-5 pb-28 sm:pb-10 space-y-3 sm:space-y-4">
         {/* Offline & Sync Resilience Banner (P1 Fix) */}
         <SyncStatusBanner
           cloudStatus={cloudStatus}
@@ -657,6 +721,14 @@ export default function Home() {
               setPeriodFilter={setPeriodFilter}
             />
 
+            {/* Unpaid events coming up soon */}
+            <PaymentReminderPanel
+              invoices={invoices}
+              onSendReminder={handleSendPaymentReminder}
+              onMarkPaid={handleQuickMarkPaid}
+              onOpenDetail={handleDetailInvoice}
+            />
+
             {/* Filter & Control Toolbar */}
             <InvoiceFilterToolbar
               search={search}
@@ -667,8 +739,8 @@ export default function Home() {
               setPeriodFilter={setPeriodFilter}
               filteredCount={filteredInvoices.length}
               onExportCSV={handleExportCSV}
-              onExportBackup={handleExportBackup}
-              onImportBackup={handleImportBackup}
+              onExportBackup={isAdmin ? handleExportBackup : undefined}
+              onImportBackup={isAdmin ? handleImportBackup : undefined}
               needBackupReminder={needBackupReminder}
             />
 
@@ -682,7 +754,7 @@ export default function Home() {
               onQuickMarkPaid={handleQuickMarkPaid}
               onOpenCrewSheet={handleOpenCrewSheet}
               onDuplicateInvoice={handleDuplicateInvoice}
-              onDeleteInvoice={handleDeleteInvoice}
+              onDeleteInvoice={isAdmin ? handleDeleteInvoice : undefined}
               onQuickChangeStatus={handleQuickChangeInvoiceStatus}
               onCreateNewInvoice={handleCreateNewInvoice}
             />
@@ -710,6 +782,7 @@ export default function Home() {
             items={inventoryItems}
             onUpdateItems={syncInventoryItems}
             onOpenNewInvoice={handleCreateNewInvoice}
+            canDelete={isAdmin}
           />
         )}
       </main>
@@ -759,7 +832,11 @@ export default function Home() {
         />
       )}
 
-      {settingsOpen && (
+      {staffOpen && isAdmin && (
+        <StaffManagerModal isOpen={staffOpen} onClose={() => setStaffOpen(false)} onNotify={showToast} />
+      )}
+
+      {settingsOpen && isAdmin && (
         <BusinessSettingsModal
           isOpen={settingsOpen}
           onClose={() => setSettingsOpen(false)}
@@ -783,7 +860,7 @@ export default function Home() {
       <MobileBottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onOpenSettings={() => setSettingsOpen(true)}
+        onOpenSettings={isAdmin ? () => setSettingsOpen(true) : undefined}
         onNewInvoice={handleCreateNewInvoice}
         scheduleCount={invoices.filter((i) => i.bookingDate && i.status !== 'cancelled').length}
         inventoryCount={inventoryItems.length}
@@ -796,16 +873,16 @@ export default function Home() {
           aria-live="polite"
           className="fixed bottom-22 sm:bottom-6 left-1/2 -translate-x-1/2 z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-200 pointer-events-auto"
         >
-          <div className="px-4 py-2.5 rounded-2xl bg-foreground text-background shadow-2xl flex items-center gap-2.5 text-xs font-bold border border-border/80 backdrop-blur-md">
+          <div className="max-w-[calc(100vw-2rem)] pl-3.5 pr-2 py-2 rounded-xl bg-foreground text-background shadow-xl flex items-center gap-2.5 text-xs font-semibold">
             <Sparkles className="w-4 h-4 text-[#f370a8] shrink-0" />
             <span>{toastMessage}</span>
             <button
               type="button"
               onClick={() => setToastMessage(null)}
               aria-label="Tutup notifikasi"
-              className="ml-2 text-background/60 hover:text-background text-xs cursor-pointer"
+              className="ml-1 w-6 h-6 rounded-md flex items-center justify-center text-background/60 hover:text-background hover:bg-background/10 cursor-pointer"
             >
-              ✕
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

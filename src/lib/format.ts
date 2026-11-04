@@ -158,3 +158,33 @@ export async function compressImageFile(file: File, maxDim = 400, quality = 0.85
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Next sequential invoice number, e.g. "009767" after "009766".
+ * Uses the highest numeric invoice number so new numbers never collide.
+ */
+export function getNextInvoiceNumber(invoices: { invoiceNumber?: string }[]): string {
+  const max = invoices.reduce((m, inv) => {
+    const n = parseInt(String(inv.invoiceNumber || '').replace(/\D/g, ''), 10);
+    return Number.isFinite(n) && n > m ? n : m;
+  }, 0);
+  return String(max + 1).padStart(6, '0');
+}
+
+/** "HH:MM" -> minutes since midnight, or null when empty/invalid. */
+export function timeToMinutes(t?: string): number | null {
+  if (!t || !/^\d{1,2}:\d{2}/.test(t)) return null;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/** Human-readable warnings for an event's setup / start / end times. */
+export function getEventTimeWarnings(setup?: string, start?: string, end?: string): string[] {
+  const s = timeToMinutes(setup);
+  const a = timeToMinutes(start);
+  const b = timeToMinutes(end);
+  const out: string[] = [];
+  if (a !== null && b !== null && b <= a) out.push('Jam selesai lebih awal / sama dengan jam mulai acara.');
+  if (s !== null && a !== null && s > a) out.push('Jam setup balon setelah jam acara dimulai.');
+  return out;
+}

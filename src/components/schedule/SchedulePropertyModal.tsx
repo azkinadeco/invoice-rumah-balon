@@ -537,7 +537,7 @@ export const SchedulePropertyModal: React.FC<SchedulePropertyModalProps> = ({
                         size="sm"
                         onClick={() => handleAddStockItem(it, 1)}
                         className={cn(
-                          'h-8 px-3 rounded-xl font-bold text-xs shrink-0 transition-all hover:scale-105 active:scale-95 cursor-pointer',
+                          'h-8 px-3 rounded-xl font-bold text-xs shrink-0 transition-all active:scale-95 cursor-pointer',
                           isDepletedForDate
                             ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20'
                             : 'bg-[#4d3085]/10 hover:bg-[#4d3085] hover:text-white text-[#4d3085] dark:text-[#c4b5fd]'

@@ -291,7 +291,7 @@ export const BusinessSettingsModal: React.FC<BusinessSettingsModalProps> = ({
               type="button"
               size="sm"
               onClick={() => handleSubmit(true)}
-              className="text-xs h-9 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="text-xs h-9 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all active:scale-95 cursor-pointer"
             >
               {savedSuccess ? (
                 <>

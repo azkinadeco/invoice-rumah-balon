@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { InvoiceData, InvoiceItem, InvoiceStatus } from '@/types/invoice';
 import { PRESET_ITEMS, STATUS_COLORS } from '@/lib/constants';
-import { formatRupiah, parseRupiahInput, formatThousand } from '@/lib/format';
+import { formatRupiah, parseRupiahInput, formatThousand, getNextInvoiceNumber, getEventTimeWarnings } from '@/lib/format';
 import {
   Dialog,
   DialogContent,
@@ -157,7 +157,16 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
 
   if (!formData) return null;
 
-  const isEditing = Boolean(invoice?.id && !invoice.id.startsWith('rb-new-temp'));
+  // An invoice is only being edited when it already exists in the saved list;
+  // freshly created / duplicated drafts also carry an id but are new.
+  const isEditing = Boolean(invoice?.id && existingInvoices?.some((i) => i.id === invoice.id));
+
+  const duplicateNumberOwner = formData?.invoiceNumber?.trim()
+    ? existingInvoices.find(
+        (i) => i.id !== formData.id && i.invoiceNumber?.trim() === formData.invoiceNumber.trim()
+      )
+    : undefined;
+  const timeWarnings = getEventTimeWarnings(formData?.setupTime, formData?.eventTime, formData?.eventEndTime);
 
   const updateField = <K extends keyof InvoiceData>(key: K, value: InvoiceData[K]) => {
     let updated = { ...formData, [key]: value };
@@ -289,8 +298,10 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
   };
 
   const generateInvoiceNumber = () => {
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    updateField('invoiceNumber', `00${rand}`);
+    updateField(
+      'invoiceNumber',
+      getNextInvoiceNumber(existingInvoices.filter((i) => i.id !== formData?.id))
+    );
   };
 
   const handleVenueChange = (val: string) => {
@@ -315,13 +326,26 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
       alert('Mohon isi nama pelanggan terlebih dahulu.');
       return;
     }
+    if (duplicateNumberOwner) {
+      alert(
+        `Nomor invoice #${formData.invoiceNumber} sudah dipakai oleh ${duplicateNumberOwner.clientName || 'invoice lain'}. Klik tombol ↻ untuk nomor baru.`
+      );
+      return;
+    }
+    if (
+      timeWarnings.length > 0 &&
+      !confirm(`Cek jam acara:\n• ${timeWarnings.join('\n• ')}\n\nTetap simpan?`)
+    ) {
+      return;
+    }
     onSave(formData);
     onClose();
   };
 
   const itemCount = formData.items.length;
-  const isOptimalCount = itemCount <= 4;
-  const isAutoScaled = itemCount === 5 || itemCount === 6;
+  // Matches the size tiers in InvoicePreview
+  const isOptimalCount = itemCount <= 6;
+  const isAutoScaled = itemCount >= 7 && itemCount <= 12;
 
   const STATUS_LIST: Array<{ id: InvoiceStatus; label: string; icon: string }> = [
     { id: 'draft', label: 'Draft', icon: '📝' },
@@ -353,7 +377,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
         </DialogHeader>
 
         {/* Scrollable Form Body with 2-Column Responsive Layout */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-6 py-4 pr-1 text-sm">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-6 pt-4 pr-1 text-sm">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* ================= LEFT COLUMN (lg:col-span-5) ================= */}
             <div className="lg:col-span-5 space-y-5">
@@ -384,11 +408,17 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                         size="icon"
                         onClick={generateInvoiceNumber}
                         className="h-10 w-10 shrink-0 rounded-xl border-border hover:bg-pink-50 dark:hover:bg-pink-950/40 text-foreground"
-                        title="Generate Nomor Baru"
+                        title="Nomor berikutnya (berurutan)"
+                        aria-label="Isi nomor invoice berikutnya"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
                       </Button>
                     </div>
+                    {duplicateNumberOwner && (
+                      <p role="alert" className="mt-1.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                        Nomor ini sudah dipakai invoice {duplicateNumberOwner.clientName || 'lain'}. Klik ↻ untuk nomor baru.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -785,7 +815,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                       {isOptimalCount ? (
                         <>
                           <CheckCircle2 className="w-3 h-3 text-[#4d3085] dark:text-[#c4b5fd]" />
-                          <span>{itemCount}/4 Item (Pas 1 Lembar A5)</span>
+                          <span>{itemCount}/6 Item (Pas 1 Lembar A5)</span>
                         </>
                       ) : isAutoScaled ? (
                         <>
@@ -795,7 +825,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                       ) : (
                         <>
                           <AlertCircle className="w-3 h-3 text-rose-500" />
-                          <span>{itemCount} Item (Disarankan maks 6 di A5)</span>
+                          <span>{itemCount} Item (Disarankan maks 12 di A5)</span>
                         </>
                       )}
                     </span>
@@ -901,9 +931,9 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                       </div>
 
                       {/* Desktop Table Row / Mobile Stacking */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 items-end">
                         {/* Deskripsi */}
-                        <div className="md:col-span-5">
+                        <div className="col-span-2 sm:col-span-3">
                           <Label className="text-[11px] text-muted-foreground font-semibold">
                             Deskripsi Layanan / Paket
                           </Label>
@@ -917,7 +947,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                         </div>
 
                         {/* Qty */}
-                        <div className="md:col-span-2">
+                        <div>
                           <Label className="text-[11px] text-muted-foreground font-semibold">
                             Qty
                           </Label>
@@ -927,7 +957,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                               variant="outline"
                               size="icon"
                               onClick={() => updateItem(item.id, 'quantity', Math.max(1, qty - 1))}
-                              className="h-10 w-7 rounded-lg shrink-0 border-border text-xs"
+                              className="h-10 w-9 rounded-lg shrink-0 border-border text-sm"
                             >
                               -
                             </Button>
@@ -938,14 +968,16 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                                 const val = parseRupiahInput(e.target.value);
                                 updateItem(item.id, 'quantity', Math.max(1, val));
                               }}
-                              className="h-10 text-xs text-center font-bold bg-background border-border rounded-lg"
+                              inputMode="numeric"
+                              aria-label={`Jumlah item #${index + 1}`}
+                              className="h-10 min-w-0 text-xs text-center font-bold bg-background border-border rounded-lg px-1"
                             />
                             <Button
                               type="button"
                               variant="outline"
                               size="icon"
                               onClick={() => updateItem(item.id, 'quantity', qty + 1)}
-                              className="h-10 w-7 rounded-lg shrink-0 border-border text-xs"
+                              className="h-10 w-9 rounded-lg shrink-0 border-border text-sm"
                             >
                               +
                             </Button>
@@ -953,7 +985,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                         </div>
 
                         {/* Harga Satuan */}
-                        <div className="md:col-span-2">
+                        <div>
                           <Label className="text-[11px] text-muted-foreground font-semibold">
                             Harga Satuan (Rp)
                           </Label>
@@ -971,7 +1003,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                         </div>
 
                         {/* Subtotal Item */}
-                        <div className="md:col-span-3">
+                        <div className="col-span-2 sm:col-span-1">
                           <Label className="text-[11px] text-muted-foreground font-semibold">
                             Subtotal Baris
                           </Label>
@@ -1007,7 +1039,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
 
             <Button
               type="submit"
-              className="text-xs h-10 sm:h-10 px-4 sm:px-6 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all hover:scale-105 active:scale-95 cursor-pointer flex-1 sm:flex-none justify-center"
+              className="text-xs h-10 px-4 sm:px-6 rounded-xl bg-[#f370a8] hover:bg-[#e85d98] text-white font-bold shadow-sm transition-colors active:scale-95 cursor-pointer flex-1 sm:flex-none justify-center"
             >
               <Save className="w-4 h-4 mr-1.5" />
               <span>{isEditing ? 'Simpan Perubahan' : 'Buat Invoice'}</span>
