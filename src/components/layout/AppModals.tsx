@@ -57,6 +57,8 @@ export function AppModals() {
           onPrint={app.printInvoiceModal}
           onDuplicate={app.duplicateInvoice}
           onOpenCrewSheet={app.openCrewSheet}
+          onRecordPayment={app.recordPayment}
+          onDeletePayment={app.isAdmin ? app.deletePayment : undefined}
         />
       )}
 

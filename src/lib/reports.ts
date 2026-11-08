@@ -106,3 +106,28 @@ export function outstandingInvoices(all: InvoiceData[]) {
     .filter((r) => r.remaining > 0)
     .sort((a, b) => String(a.inv.bookingDate).localeCompare(String(b.inv.bookingDate)));
 }
+
+export interface CashIn {
+  total: number;
+  count: number;
+  byMethod: { transfer: number; qris: number; tunai: number; other: number };
+}
+
+/**
+ * Money actually received in a month, by PAYMENT date (needs payment history).
+ * Old DP amounts without a date can't be placed in a month and are skipped.
+ */
+export function cashInMonth(all: InvoiceData[], key: string): CashIn {
+  const out: CashIn = { total: 0, count: 0, byMethod: { transfer: 0, qris: 0, tunai: 0, other: 0 } };
+  for (const inv of all) {
+    if (inv.status === 'cancelled') continue;
+    for (const p of inv.payments || []) {
+      if (monthKeyOf(p.date) !== key) continue;
+      const amount = Number(p.amount) || 0;
+      out.total += amount;
+      out.count++;
+      out.byMethod[p.method ?? 'other'] += amount;
+    }
+  }
+  return out;
+}

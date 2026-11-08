@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { InvoiceData } from '@/types/invoice';
+import { InvoiceData, PaymentRecord } from '@/types/invoice';
+import { PaymentHistory } from '@/components/invoice/PaymentHistory';
 import { STATUS_COLORS } from '@/lib/constants';
 import { formatRupiah, formatDateIndo } from '@/lib/format';
 import { getMinDp, getPaidAndRemaining } from '@/lib/payment';
-import { buildInvoiceWhatsAppUrl } from '@/lib/whatsapp';
+import { buildInvoiceWhatsAppUrl, buildPaymentReceiptWhatsAppUrl } from '@/lib/whatsapp';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,9 @@ interface InvoiceDetailModalProps {
   onPrint: (invoice: InvoiceData) => void;
   onDuplicate?: (invoice: InvoiceData) => void;
   onOpenCrewSheet?: (invoice: InvoiceData) => void;
+  onRecordPayment?: (invoice: InvoiceData, payment: Omit<PaymentRecord, 'id' | 'createdAt' | 'recordedBy'>) => void;
+  /** Admin only. */
+  onDeletePayment?: (invoice: InvoiceData, paymentId: string) => void;
 }
 
 export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
@@ -50,6 +54,8 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   onPrint,
   onDuplicate,
   onOpenCrewSheet,
+  onRecordPayment,
+  onDeletePayment,
 }) => {
   if (!invoice) return null;
 
@@ -237,6 +243,15 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               </div>
             )}
           </div>
+
+          {onRecordPayment && (
+            <PaymentHistory
+              invoice={invoice}
+              onRecord={(payment) => onRecordPayment(invoice, payment)}
+              onDelete={onDeletePayment ? (id) => onDeletePayment(invoice, id) : undefined}
+              onSendReceipt={(payment) => window.open(buildPaymentReceiptWhatsAppUrl(invoice, payment), '_blank')}
+            />
+          )}
 
           {/* Payment transfer destination */}
           <div className="flex items-center gap-2.5 p-3 rounded-xl border border-border bg-card text-xs text-muted-foreground">

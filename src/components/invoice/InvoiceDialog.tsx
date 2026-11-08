@@ -712,10 +712,23 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                       <span>Uang Muka / DP Diterima (Rp)</span>
                     </Label>
                     <span className="text-[10px] text-muted-foreground font-medium">
-                      Bisa ketik bebas / custom
+                      {formData.payments?.length ? `${formData.payments.length}× pembayaran tercatat` : 'Bisa ketik bebas / custom'}
                     </span>
                   </div>
 
+                  {formData.payments?.length ? (
+                    // With a payment history the amount comes from the recorded payments
+                    <div className="p-3 rounded-xl bg-muted/50 border border-border text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Total dari riwayat pembayaran</span>
+                        <span className="font-mono font-bold text-foreground">{formatRupiah(formData.dpPaidAmount || 0)}</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Untuk menambah atau mengoreksi pembayaran, buka <strong className="text-foreground">Detail invoice → Riwayat Pembayaran</strong>.
+                      </p>
+                    </div>
+                  ) : (
+                  <>
                   <div className="relative">
                     <span className="absolute left-3 top-2.5 text-xs font-bold text-muted-foreground">
                       Rp
@@ -770,6 +783,8 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                       </button>
                     )}
                   </div>
+                  </>
+                  )}
                 </div>
 
                 {/* Total Tagihan & Sisa Pelunasan Card */}

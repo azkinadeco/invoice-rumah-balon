@@ -65,6 +65,7 @@ export function exportInvoicesToCSV(invoices: InvoiceData[], filename = 'Data_In
     'Sisa Tagihan (Rp)',
     'Status Pembayaran',
     'Daftar Item Pesanan',
+    'Riwayat Pembayaran',
   ];
 
   const rows = invoices.map((inv) => {
@@ -86,6 +87,10 @@ export function exportInvoicesToCSV(invoices: InvoiceData[], filename = 'Data_In
       `"${inv.status || ''}"`,
       `"${(inv.items || [])
         .map((it) => `${it.quantity || 1}x ${it.description || ''} (Rp ${it.amount || 0})`)
+        .join('; ')
+        .replace(/"/g, '""')}"`,
+      `"${(inv.payments || [])
+        .map((p) => `${p.date || 'tanpa tanggal'} ${p.method || ''} Rp ${p.amount}`.replace(/\s+/g, ' '))
         .join('; ')
         .replace(/"/g, '""')}"`,
     ];

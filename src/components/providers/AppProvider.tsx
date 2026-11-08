@@ -1,12 +1,12 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { InvoiceData, BusinessSettings, InvoiceStatus } from '@/types/invoice';
+import { InvoiceData, BusinessSettings, InvoiceStatus, PaymentRecord } from '@/types/invoice';
 import { InventoryItem } from '@/types/inventory';
 import { DEFAULT_INVOICE, DEFAULT_BUSINESS_SETTINGS, DEFAULT_INVENTORY_ITEMS } from '@/lib/constants';
 import { buildInvoiceWhatsAppUrl, buildPaymentReminderWhatsAppUrl } from '@/lib/whatsapp';
 import { getNextInvoiceNumber, todayLocalISO } from '@/lib/format';
-import { getMinDp } from '@/lib/payment';
+import { addPayment, getMinDp, newPaymentId, reconcilePayments, removePayment } from '@/lib/payment';
 import {
   applyBusinessSettings,
   pickBusinessSettings,
@@ -84,6 +84,10 @@ interface AppContextValue {
   sendWhatsApp: (inv: InvoiceData) => void;
   sendPaymentReminder: (inv: InvoiceData, remaining: number) => void;
   updateInvoice: (updated: InvoiceData) => void;
+  /** Record money received for an invoice (DP, cicilan, pelunasan). */
+  recordPayment: (inv: InvoiceData, payment: Omit<PaymentRecord, 'id' | 'createdAt' | 'recordedBy'>) => void;
+  /** Admin only: remove a wrongly recorded payment. */
+  deletePayment: (inv: InvoiceData, paymentId: string) => void;
   saveSettings: (settings: BusinessSettings) => void;
 }
 
@@ -112,7 +116,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [crewSheetInvoice, setCrewSheetInvoice] = useState<InvoiceData | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [staffOpen, setStaffOpen] = useState(false);
-  const { isAdmin } = useAuth();
+  const { isAdmin, name: userName, email: userEmail } = useAuth();
+  const recordedBy = userName || userEmail || undefined;
   const isAdminRef = useRef(isAdmin);
   useEffect(() => {
     isAdminRef.current = isAdmin;
@@ -409,10 +414,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const invoices = invoicesRef.current;
     const existingIndex = invoices.findIndex((i) => i.id === saved.id);
     let nextList: InvoiceData[];
-    const toSave: InvoiceData = {
-      ...saved,
-      updatedAt: new Date().toISOString(),
-    };
+    const toSave: InvoiceData = reconcilePayments(
+      existingIndex >= 0 ? invoices[existingIndex] : undefined,
+      { ...saved, updatedAt: new Date().toISOString() },
+      recordedBy,
+      'Dicatat dari form invoice'
+    );
 
     if (existingIndex >= 0) {
       nextList = [...invoices];
@@ -451,13 +458,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } else if (newStatus === 'draft' || newStatus === 'sent') {
         remaining = Math.max(0, inv.total - (dpPaid || 0));
       }
-      return {
-        ...inv,
-        status: newStatus,
-        dpPaidAmount: dpPaid,
-        remainingAmount: remaining,
-        updatedAt: new Date().toISOString(),
-      };
+      return reconcilePayments(
+        inv,
+        {
+          ...inv,
+          status: newStatus,
+          dpPaidAmount: dpPaid,
+          remainingAmount: remaining,
+          updatedAt: new Date().toISOString(),
+        },
+        recordedBy
+      );
     });
     const target = updated.find((i) => i.id === id);
     syncInvoices(updated, target ? [target] : []);
@@ -480,13 +491,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const updated = invoicesRef.current.map((i) => {
       if (i.id !== inv.id) return i;
-      return {
-        ...i,
-        status: 'paid' as InvoiceStatus,
-        dpPaidAmount: i.total,
-        remainingAmount: 0,
-        updatedAt: new Date().toISOString(),
-      };
+      return reconcilePayments(
+        i,
+        { ...i, status: 'paid' as InvoiceStatus, updatedAt: new Date().toISOString() },
+        recordedBy,
+        'Pelunasan (ditandai lunas)'
+      );
     });
     const target = updated.find((i) => i.id === inv.id);
     syncInvoices(updated, target ? [target] : []);
@@ -505,11 +515,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Replace one invoice in list (schedule board / crew sheet edits)
   const updateInvoice = (updated: InvoiceData) => {
-    const updatedAt = { ...updated, updatedAt: new Date().toISOString() };
+    const prev = invoicesRef.current.find((inv) => inv.id === updated.id);
+    const updatedAt = reconcilePayments(prev, { ...updated, updatedAt: new Date().toISOString() }, recordedBy);
     syncInvoices(
       invoicesRef.current.map((inv) => (inv.id === updated.id ? updatedAt : inv)),
       [updatedAt]
     );
+  };
+
+  const commitPaymentChange = (next: InvoiceData, message: string) => {
+    const stamped = { ...next, updatedAt: new Date().toISOString() };
+    syncInvoices(
+      invoicesRef.current.map((inv) => (inv.id === stamped.id ? stamped : inv)),
+      [stamped]
+    );
+    // Keep an open detail view in sync with the new history
+    setDetailInvoice((cur) => (cur && cur.id === stamped.id ? withSettings(stamped) : cur));
+    showToast(message);
+  };
+
+  const recordPayment: AppContextValue['recordPayment'] = (inv, payment) => {
+    const current = invoicesRef.current.find((i) => i.id === inv.id) ?? inv;
+    const next = addPayment(current, {
+      ...payment,
+      id: newPaymentId(),
+      recordedBy,
+      createdAt: new Date().toISOString(),
+    });
+    commitPaymentChange(
+      next,
+      next.status === 'paid'
+        ? `Pembayaran dicatat — #${inv.invoiceNumber} LUNAS ✨`
+        : `Pembayaran ${payment.amount.toLocaleString('id-ID')} dicatat untuk #${inv.invoiceNumber} 💰`
+    );
+  };
+
+  const deletePayment: AppContextValue['deletePayment'] = (inv, paymentId) => {
+    if (!isAdmin) return;
+    const current = invoicesRef.current.find((i) => i.id === inv.id) ?? inv;
+    commitPaymentChange(removePayment(current, paymentId), 'Catatan pembayaran dihapus.');
   };
 
   // Shop settings are shared by every device through the cloud (rb_settings),
@@ -580,6 +624,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         sendWhatsApp,
         sendPaymentReminder,
         updateInvoice,
+        recordPayment,
+        deletePayment,
         saveSettings,
       }}
     >

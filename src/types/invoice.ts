@@ -10,6 +10,21 @@ export interface InvoiceItem {
 
 export type InvoiceStatus = 'draft' | 'sent' | 'dp_paid' | 'paid' | 'cancelled';
 
+export type PaymentMethod = 'transfer' | 'qris' | 'tunai';
+
+/** One money receipt for an invoice (DP, cicilan, pelunasan). */
+export interface PaymentRecord {
+  id: string;
+  /** Day the money was received, "YYYY-MM-DD". Empty for amounts recorded before payment history existed. */
+  date: string;
+  amount: number;
+  method?: PaymentMethod;
+  note?: string;
+  /** Name / email of the staff member who recorded it. */
+  recordedBy?: string;
+  createdAt: string;
+}
+
 export type ScheduleStatus = 'scheduled' | 'ready' | 'in_progress' | 'completed';
 
 export interface BusinessSettings {
@@ -40,6 +55,8 @@ export interface InvoiceData extends BusinessSettings {
   dpAmount: number;
   dpPaidAmount?: number;      // Nominal DP custom yang sudah dibayarkan oleh client
   remainingAmount?: number;   // Sisa tagihan belum dibayar = total - (dpPaidAmount || 0)
+  /** Riwayat pembayaran. When present, dpPaidAmount is kept equal to its sum. */
+  payments?: PaymentRecord[];
   total: number;
   status: InvoiceStatus;
   
