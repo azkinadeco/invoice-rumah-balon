@@ -3,13 +3,15 @@
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Plus, Sun, Moon, Receipt, Calendar, Boxes, Users, LogOut } from 'lucide-react';
+import { Settings, Plus, Sun, Moon, Receipt, Calendar, Boxes, Users, LogOut, BarChart3 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 interface AdminHeaderProps {
-  activeTab: 'invoices' | 'schedule' | 'inventory';
-  onTabChange: (tab: 'invoices' | 'schedule' | 'inventory') => void;
+  activeTab: 'invoices' | 'schedule' | 'inventory' | 'reports';
+  onTabChange: (tab: 'invoices' | 'schedule' | 'inventory' | 'reports') => void;
+  /** Admin only: show the monthly report tab. */
+  showReports?: boolean;
   onOpenSettings?: () => void;
   onOpenStaffManager?: () => void;
   onSignOut: () => void;
@@ -35,6 +37,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onToggleTheme,
   scheduleCount = 0,
   inventoryCount = 0,
+  showReports = false,
   cloudStatus = 'offline',
   lastSyncTime,
 }) => {
@@ -128,6 +131,23 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {showReports && (
+              <button
+                type="button"
+                onClick={() => onTabChange('reports')}
+                aria-current={activeTab === 'reports' ? 'page' : undefined}
+                className={cn(
+                  'flex items-center gap-1.5 h-8 px-2.5 lg:px-3 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap',
+                  activeTab === 'reports'
+                    ? 'bg-card text-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-[#4d3085] dark:text-[#f370a8]" />
+                Laporan
+              </button>
+            )}
           </nav>
         </div>
 

@@ -12,7 +12,7 @@ import { useApp } from '@/components/providers/AppProvider';
 import { useAuth } from '@/lib/auth';
 import { getPendingSyncQueue } from '@/lib/supabase';
 
-type Tab = 'invoices' | 'schedule' | 'inventory';
+type Tab = 'invoices' | 'schedule' | 'inventory' | 'reports';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const app = useApp();
@@ -34,6 +34,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? 'schedule'
     : pathname.startsWith('/inventory')
     ? 'inventory'
+    : pathname.startsWith('/reports')
+    ? 'reports'
     : 'invoices';
   const onTabChange = (tab: Tab) => router.push(`/${tab}`);
 
@@ -135,6 +137,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         inventoryCount={inventoryCount}
         cloudStatus={app.cloudStatus}
         lastSyncTime={app.lastSyncTime}
+        showReports={app.isAdmin}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 pt-3 sm:pt-5 pb-28 sm:pb-10 space-y-3 sm:space-y-4">
@@ -161,10 +164,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileBottomNav
         activeTab={activeTab}
         onTabChange={onTabChange}
-        onOpenSettings={app.isAdmin ? () => app.setSettingsOpen(true) : undefined}
         onNewInvoice={app.createNewInvoice}
         scheduleCount={scheduleCount}
         inventoryCount={inventoryCount}
+        showReports={app.isAdmin}
       />
 
       {/* Toast Notification with WCAG 2.2 Live Region */}

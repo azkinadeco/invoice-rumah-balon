@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Receipt, Calendar, Boxes, Settings, Plus } from 'lucide-react';
+import { Receipt, Calendar, Boxes, BarChart3, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MobileBottomNavProps {
-  activeTab: 'invoices' | 'schedule' | 'inventory';
-  onTabChange: (tab: 'invoices' | 'schedule' | 'inventory') => void;
-  onOpenSettings?: () => void;
+  activeTab: 'invoices' | 'schedule' | 'inventory' | 'reports';
+  onTabChange: (tab: 'invoices' | 'schedule' | 'inventory' | 'reports') => void;
+  /** Admin only: monthly report tab (Settings lives in the account menu on phones). */
+  showReports?: boolean;
   onNewInvoice: () => void;
   scheduleCount?: number;
   inventoryCount?: number;
@@ -16,7 +17,7 @@ interface MobileBottomNavProps {
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   onTabChange,
-  onOpenSettings,
+  showReports = false,
   onNewInvoice,
   scheduleCount = 0,
   inventoryCount = 0,
@@ -134,19 +135,30 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <span className="text-[10px] tracking-tight mt-0.5">Stok</span>
         </button>
 
-        {/* Tab 4: Setting Toko (admin only) */}
-        {onOpenSettings && (
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          aria-label="Buka Pengaturan Toko"
-          className="flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer relative active:scale-90 text-muted-foreground hover:text-foreground font-medium"
-        >
-          <div className="p-1.5 rounded-xl hover:bg-muted text-muted-foreground">
-            <Settings className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] tracking-tight mt-0.5">Setting</span>
-        </button>
+        {/* Tab 4: Laporan (admin only) */}
+        {showReports && (
+          <button
+            type="button"
+            onClick={() => onTabChange('reports')}
+            aria-current={activeTab === 'reports' ? 'page' : undefined}
+            aria-label="Lihat Laporan Bulanan"
+            className={cn(
+              'flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer relative active:scale-90',
+              activeTab === 'reports'
+                ? 'text-[#f370a8] font-bold'
+                : 'text-muted-foreground hover:text-foreground font-medium'
+            )}
+          >
+            <div
+              className={cn(
+                'p-1.5 rounded-xl transition-all',
+                activeTab === 'reports' ? 'bg-[#f370a8]/15 text-[#f370a8] ' : 'text-muted-foreground'
+              )}
+            >
+              <BarChart3 className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Laporan</span>
+          </button>
         )}
       </div>
     </nav>
