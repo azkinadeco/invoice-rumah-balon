@@ -5,7 +5,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { InvoiceData, ScheduleStatus } from '@/types/invoice';
 import { InventoryItem } from '@/types/inventory';
 import { formatDateIndo, formatRupiah, formatWhatsAppPhone } from '@/lib/format';
-import { getPaidAndRemaining } from '@/lib/payment';
+import { getMinDp, getPaidAndRemaining } from '@/lib/payment';
 import { SCHEDULE_STATUS_CONFIG } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -380,7 +380,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
       ? `\n💰 *Status Pembayaran:* Lunas Penuh ✨`
       : dpPaid > 0
       ? `\n💰 *Total Tagihan:* ${formatRupiah(inv.total)}\n💳 *DP Diterima:* ${formatRupiah(dpPaid)}\n⏳ *Sisa Tagihan (Pelunasan H-1):* ${formatRupiah(remaining)}`
-      : `\n💰 *Total Tagihan:* ${formatRupiah(inv.total)} (Min DP 30%: ${formatRupiah(Math.round(inv.total * 0.3))})`;
+      : `\n💰 *Total Tagihan:* ${formatRupiah(inv.total)} (Min DP ${getMinDp(inv).percent}%: ${formatRupiah(getMinDp(inv).amount)})`;
 
     const greeting = `Halo Kak ${inv.clientName || 'Pelanggan'}! \n\nSalam dari *Rumah Balon Decoration* 🎈\nKami ingin mengonfirmasi jadwal pemasangan dekorasi acara Kakak:\n\n📅 *Tanggal:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}\n⏰ *Jam Mulai Acara:* ${inv.eventTime || '14:00'} WIB${inv.eventEndTime ? ' - ' + inv.eventEndTime + ' WIB' : ''}\n🎈 *Jam Setup/Loading Balon:* ${inv.setupTime || '11:00'} WIB\n📍 *Lokasi/Venue:* ${inv.venue || inv.clientAddress || 'Sesuai kesepakatan'}\n${inv.themeNote ? '🎨 *Tema Balon:* ' + inv.themeNote + '\n' : ''}${paymentInfo}\n\nMohon konfirmasi bila ada penyesuaian jam atau arahan lokasi ya Kak. Terima kasih banyak! ✨`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(greeting)}`;
@@ -1042,12 +1042,12 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                     {/* Sisa Tagihan Reminder for Today/Tomorrow events */}
                     {(inv.bookingDate === todayStr || inv.bookingDate === tomorrowStr) &&
                       inv.status !== 'paid' &&
-                      (inv.remainingAmount ?? (inv.total - (inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round(inv.total * 0.3) : 0)))) > 0 && (
+                      getPaidAndRemaining(inv).remaining > 0 && (
                       <div className="py-1.5 px-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-between gap-2 text-xs text-rose-600 dark:text-rose-400 font-semibold">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                           <span>
-                            Pelunasan H-1 belum tuntas: <strong className="font-mono">{formatRupiah(inv.remainingAmount ?? Math.max(0, inv.total - (inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round(inv.total * 0.3) : 0))))}</strong>
+                            Pelunasan H-1 belum tuntas: <strong className="font-mono">{formatRupiah(getPaidAndRemaining(inv).remaining)}</strong>
                           </span>
                         </div>
                         <a
@@ -1322,7 +1322,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
                             ) : inv.status === 'paid' ? (
                               <span className="text-emerald-500 font-bold">• Lunas ✨</span>
                             ) : (inv.status === 'dp_paid' || (inv.dpPaidAmount && inv.dpPaidAmount > 0)) ? (
-                              <span className="text-rose-500 font-bold">• Sisa: {formatRupiah(inv.remainingAmount ?? Math.max(0, inv.total - (inv.dpPaidAmount || Math.round(inv.total * 0.3))))}</span>
+                              <span className="text-rose-500 font-bold">• Sisa: {formatRupiah(getPaidAndRemaining(inv).remaining)}</span>
                             ) : null}
                           </div>
                           {inv.assignedCrew && (

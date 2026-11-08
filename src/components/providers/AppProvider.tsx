@@ -6,6 +6,7 @@ import { InventoryItem } from '@/types/inventory';
 import { DEFAULT_INVOICE, DEFAULT_BUSINESS_SETTINGS, DEFAULT_INVENTORY_ITEMS } from '@/lib/constants';
 import { buildInvoiceWhatsAppUrl, buildPaymentReminderWhatsAppUrl } from '@/lib/whatsapp';
 import { getNextInvoiceNumber, todayLocalISO } from '@/lib/format';
+import { getMinDp } from '@/lib/payment';
 import {
   applyBusinessSettings,
   pickBusinessSettings,
@@ -225,8 +226,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (cloudInventory !== null) {
         connected = true;
         if (cloudInventory.length > 0) {
-          setInventoryItems(cloudInventory);
-          localStorage.setItem('rb_inventory_items', JSON.stringify(cloudInventory));
+          // Keep stock edits made offline that are still waiting to be uploaded
+          const byId = new Map(cloudInventory.map((it) => [it.id, it]));
+          for (const q of getPendingSyncQueue()) {
+            if (q.type === 'inventory' && q.payload?.id) byId.set(q.id, q.payload);
+            else if (q.type === 'delete_inventory') byId.delete(q.id);
+          }
+          const mergedInv = [...byId.values()];
+          setInventoryItems(mergedInv);
+          localStorage.setItem('rb_inventory_items', JSON.stringify(mergedInv));
         } else {
           const localInv = JSON.parse(localStorage.getItem('rb_inventory_items') || '[]');
           if (localInv.length > 0) {
@@ -303,10 +311,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setInventoryItems(list);
     try {
       localStorage.setItem('rb_inventory_items', JSON.stringify(list));
-    } catch (e: any) {
+    } catch (e) {
       console.error('Inventory save failed:', e);
     }
-    batchSyncInventoryToCloud(list).then((ok) => {
+
+    // Upload only items that changed (edited items are new objects; untouched ones keep their reference)
+    const prevById = new Map(inventoryItems.map((it) => [it.id, it]));
+    const changed = list.filter((it) => prevById.get(it.id) !== it);
+    if (changed.length === 0) return;
+    batchSyncInventoryToCloud(changed).then((ok) => {
+      // Offline: queue each item so the change survives a reload and is sent later
+      if (!ok) changed.forEach((it) => addToPendingSyncQueue({ id: it.id, type: 'inventory', payload: it }));
       setCloudStatus(ok ? 'connected' : 'offline');
       if (ok) setLastSyncTime(new Date());
     });
@@ -430,7 +445,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         remaining = 0;
       } else if (newStatus === 'dp_paid') {
         if (!dpPaid || dpPaid === 0) {
-          dpPaid = Math.round(inv.total * 0.3);
+          dpPaid = getMinDp(inv).amount;
         }
         remaining = Math.max(0, inv.total - dpPaid);
       } else if (newStatus === 'draft' || newStatus === 'sent') {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { getPaidAndRemaining } from '@/lib/payment';
 import { StatCard } from '@/components/common/StatCard';
 import { Receipt, TrendingUp, CheckCircle2, Clock } from 'lucide-react';
 import { formatRupiah } from '@/lib/format';
@@ -27,42 +28,14 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
   const cancelledCount = filteredInvoices.filter((i) => i.status === 'cancelled').length;
 
   const totalOmset = activeInvoices.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
-  const totalDpCollected = activeInvoices.reduce((sum, i) => {
-    if (i.status === 'paid') return sum + (Number(i.total) || 0);
-    const dp =
-      typeof i.dpPaidAmount === 'number' && i.dpPaidAmount > 0
-        ? i.dpPaidAmount
-        : i.status === 'dp_paid'
-        ? i.dpAmount || Math.round((i.total || 0) * 0.3)
-        : 0;
-    return sum + dp;
-  }, 0);
-
-  const totalRemainingUnpaid = activeInvoices.reduce((sum, i) => {
-    if (i.status === 'paid') return sum;
-    const dp =
-      typeof i.dpPaidAmount === 'number' && i.dpPaidAmount > 0
-        ? i.dpPaidAmount
-        : i.status === 'dp_paid'
-        ? i.dpAmount || Math.round((i.total || 0) * 0.3)
-        : 0;
-    return sum + Math.max(0, (i.total || 0) - dp);
-  }, 0);
+  // One shared rule for paid / remaining (same as invoice, WhatsApp and CSV)
+  const money = activeInvoices.map(getPaidAndRemaining);
+  const totalDpCollected = money.reduce((sum, m) => sum + m.dpPaid, 0);
+  const totalRemainingUnpaid = money.reduce((sum, m) => sum + m.remaining, 0);
 
   const paidCount = activeInvoices.filter((i) => i.status === 'paid').length;
-  const dpCount = activeInvoices.filter(
-    (i) => i.status === 'dp_paid' || (Boolean(i.dpPaidAmount && i.dpPaidAmount > 0) && i.status !== 'paid')
-  ).length;
-  const unpaidInvoicesCount = activeInvoices.filter((i) => {
-    if (i.status === 'paid') return false;
-    const dp =
-      typeof i.dpPaidAmount === 'number' && i.dpPaidAmount > 0
-        ? i.dpPaidAmount
-        : i.status === 'dp_paid'
-        ? i.dpAmount || Math.round((i.total || 0) * 0.3)
-        : 0;
-    return (Number(i.total) || 0) - dp > 0;
-  }).length;
+  const dpCount = activeInvoices.filter((i, idx) => i.status !== 'paid' && money[idx].dpPaid > 0).length;
+  const unpaidInvoicesCount = money.filter((m) => m.remaining > 0).length;
 
   // Only show a period badge when a period filter is active
   const periodLabel =

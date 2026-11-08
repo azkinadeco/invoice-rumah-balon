@@ -16,3 +16,9 @@ export function getPaidAndRemaining(inv: InvoiceData) {
   const dpPaid = Math.min(rawPaid, total);
   return { dpPaid, remaining: Math.max(0, total - dpPaid) };
 }
+
+/** Minimum DP for an invoice, from its own DP percentage (default 30%). */
+export function getMinDp(inv: Pick<InvoiceData, 'total' | 'dpAmount' | 'dpMinPercent'>) {
+  const percent = inv.dpMinPercent || 30;
+  return { percent, amount: inv.dpAmount || Math.round((Number(inv.total) || 0) * (percent / 100)) };
+}

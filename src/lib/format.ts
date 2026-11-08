@@ -1,3 +1,5 @@
+import { getPaidAndRemaining } from '@/lib/payment';
+
 export function formatRupiah(amount: number): string {
   if (isNaN(amount)) return 'Rp 0';
   return 'Rp ' + amount.toLocaleString('id-ID');
@@ -65,11 +67,7 @@ export function exportInvoicesToCSV(invoices: any[], filename = 'Data_Invoice_Ru
   ];
 
   const rows = invoices.map((inv) => {
-    const isPaid = inv.status === 'paid';
-    const dpPaid = isPaid
-      ? (inv.total || 0)
-      : (inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round((inv.total || 0) * 0.3) : 0));
-    const remaining = isPaid ? 0 : Math.max(0, (inv.total || 0) - dpPaid);
+    const { dpPaid, remaining } = getPaidAndRemaining(inv);
 
     return [
       `"${inv.invoiceNumber || ''}"`,

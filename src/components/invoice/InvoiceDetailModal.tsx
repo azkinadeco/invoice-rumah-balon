@@ -4,7 +4,7 @@ import React from 'react';
 import { InvoiceData } from '@/types/invoice';
 import { STATUS_COLORS } from '@/lib/constants';
 import { formatRupiah, formatDateIndo } from '@/lib/format';
-import { getPaidAndRemaining } from '@/lib/payment';
+import { getMinDp, getPaidAndRemaining } from '@/lib/payment';
 import { buildInvoiceWhatsAppUrl } from '@/lib/whatsapp';
 import {
   Dialog,
@@ -212,8 +212,8 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               </div>
             ) : (
               <div className="flex justify-between items-center text-[#4d3085] dark:text-[#c4b5fd] font-bold pt-1.5 border-t border-border">
-                <span>Rekomendasi DP Minimal 30%:</span>
-                <span className="font-mono">{formatRupiah(Math.round(invoice.total * 0.3))}</span>
+                <span>Rekomendasi DP Minimal {getMinDp(invoice).percent}%:</span>
+                <span className="font-mono">{formatRupiah(getMinDp(invoice).amount)}</span>
               </div>
             )}
 

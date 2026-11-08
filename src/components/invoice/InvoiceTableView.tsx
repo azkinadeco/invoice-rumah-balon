@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { getPaidAndRemaining } from '@/lib/payment';
 import { InvoiceData, InvoiceStatus } from '@/types/invoice';
 import { STATUS_COLORS } from '@/lib/constants';
 import { formatRupiah, formatDateIndo, formatWhatsAppPhone } from '@/lib/format';
@@ -172,16 +173,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
         {invoices.map((inv, idx) => {
           const formattedPhone = formatWhatsAppPhone(inv.clientPhone);
           const isPaid = inv.status === 'paid';
-          const dpPaid =
-            typeof inv.dpPaidAmount === 'number' && inv.dpPaidAmount > 0
-              ? inv.dpPaidAmount
-              : inv.status === 'dp_paid'
-              ? inv.dpAmount || Math.round(inv.total * 0.3)
-              : 0;
-          const remainingAmount =
-            typeof inv.remainingAmount === 'number'
-              ? inv.remainingAmount
-              : Math.max(0, inv.total - dpPaid);
+          const { dpPaid, remaining: remainingAmount } = getPaidAndRemaining(inv);
 
           return (
             <div
@@ -345,16 +337,7 @@ export const InvoiceTableView: React.FC<InvoiceTableViewProps> = ({
             {invoices.map((inv, idx) => {
               const formattedPhone = formatWhatsAppPhone(inv.clientPhone);
               const isPaid = inv.status === 'paid';
-              const dpPaid =
-                typeof inv.dpPaidAmount === 'number' && inv.dpPaidAmount > 0
-                  ? inv.dpPaidAmount
-                  : inv.status === 'dp_paid'
-                  ? inv.dpAmount || Math.round(inv.total * 0.3)
-                  : 0;
-              const remainingAmount =
-                typeof inv.remainingAmount === 'number'
-                  ? inv.remainingAmount
-                  : Math.max(0, inv.total - dpPaid);
+              const { dpPaid, remaining: remainingAmount } = getPaidAndRemaining(inv);
 
               return (
                 <TableRow
