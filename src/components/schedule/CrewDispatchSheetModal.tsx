@@ -841,7 +841,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                           <button
                             key={tab.id}
                             type="button"
-                            onClick={() => setStockCategoryTab(tab.id as any)}
+                            onClick={() => setStockCategoryTab(tab.id as typeof stockCategoryTab)}
                             className={`h-8 px-3 rounded-full text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer border ${
                               stockCategoryTab === tab.id
                                 ? 'bg-[#4d3085] text-white border-[#4d3085]'

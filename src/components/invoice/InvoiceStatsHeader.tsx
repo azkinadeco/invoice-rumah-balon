@@ -7,13 +7,15 @@ import { Receipt, TrendingUp, CheckCircle2, Clock } from 'lucide-react';
 import { formatRupiah } from '@/lib/format';
 import { InvoiceData } from '@/types/invoice';
 
+type PeriodFilter = 'all' | 'this_month' | 'last_month';
+
 interface InvoiceStatsHeaderProps {
   invoices: InvoiceData[];
   filteredInvoices: InvoiceData[];
   statusFilter: string;
   setStatusFilter: (status: string | ((prev: string) => string)) => void;
-  periodFilter: 'all' | 'this_month' | 'last_month';
-  setPeriodFilter: (period: 'all' | 'this_month' | 'last_month' | ((prev: any) => any)) => void;
+  periodFilter: PeriodFilter;
+  setPeriodFilter: (period: PeriodFilter | ((prev: PeriodFilter) => PeriodFilter)) => void;
 }
 
 export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
@@ -66,7 +68,7 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
         icon={TrendingUp}
         tone="pink"
         active={periodFilter === 'this_month'}
-        onClick={() => setPeriodFilter((prev: any) => (prev === 'this_month' ? 'all' : 'this_month'))}
+        onClick={() => setPeriodFilter((prev) => (prev === 'this_month' ? 'all' : 'this_month'))}
         title="Klik untuk filter invoice bulan ini"
       />
       <StatCard
@@ -78,7 +80,7 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
         icon={CheckCircle2}
         tone="emerald"
         active={statusFilter === 'paid'}
-        onClick={() => setStatusFilter((prev: any) => (prev === 'paid' ? 'all' : 'paid'))}
+        onClick={() => setStatusFilter((prev) => (prev === 'paid' ? 'all' : 'paid'))}
         title="Klik untuk filter invoice yang sudah Lunas"
       />
       <StatCard
@@ -90,7 +92,7 @@ export const InvoiceStatsHeader: React.FC<InvoiceStatsHeaderProps> = ({
         icon={Clock}
         tone="rose"
         active={statusFilter === 'dp_paid'}
-        onClick={() => setStatusFilter((prev: any) => (prev === 'dp_paid' ? 'all' : 'dp_paid'))}
+        onClick={() => setStatusFilter((prev) => (prev === 'dp_paid' ? 'all' : 'dp_paid'))}
         title="Klik untuk filter invoice yang masih ada sisa tagihan"
       />
     </div>

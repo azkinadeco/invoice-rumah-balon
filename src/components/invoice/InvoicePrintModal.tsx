@@ -37,7 +37,12 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
   onClose,
   invoice,
 }) => {
-  const [scale, setScale] = useState(1);
+  // Mounted only while open: pick a preview scale that fits A5 on phones right away
+  const [scale, setScale] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 640
+      ? Math.min(0.65, Math.max(0.48, Number(((window.innerWidth - 36) / 560).toFixed(2))))
+      : 1
+  );
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isCopyingImage, setIsCopyingImage] = useState(false);
@@ -45,14 +50,6 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
   const [copiedNotice, setCopiedNotice] = useState(false);
   const [customPhone, setCustomPhone] = useState(invoice?.clientPhone || '');
   const [showPhoneEditor, setShowPhoneEditor] = useState(false);
-
-  // Auto-adapt preview scale on mobile so A5 fits screen width perfectly
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      const calculated = Math.min(0.65, Math.max(0.48, Number(((window.innerWidth - 36) / 560).toFixed(2))));
-      setScale(calculated);
-    }
-  }, [isOpen]);
 
   if (!invoice) return null;
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { InvoiceData, InvoiceItem, InvoiceStatus } from '@/types/invoice';
 import { PRESET_ITEMS, STATUS_COLORS } from '@/lib/constants';
+import { getMinDp } from '@/lib/payment';
 import { formatRupiah, parseRupiahInput, formatThousand, getNextInvoiceNumber, getEventTimeWarnings, validateSetupTime, todayLocalISO } from '@/lib/format';
 import {
   Dialog,
@@ -54,6 +55,38 @@ interface ClientSuggestion {
   venue: string;
 }
 
+/** Fill defaults for a fresh / loaded invoice before editing. */
+function prepareFormData(invoice: InvoiceData | null): InvoiceData | null {
+  if (!invoice) return null;
+  const today = todayLocalISO();
+  const invTotal = invoice.total || 0;
+  const initialDp =
+    invoice.dpPaidAmount !== undefined
+      ? invoice.dpPaidAmount
+      : invoice.status === 'paid'
+      ? invTotal
+      : invoice.status === 'dp_paid'
+      ? getMinDp(invoice).amount
+      : 0;
+  const initialVenue = invoice.venue !== undefined ? invoice.venue : invoice.clientAddress || '';
+  return {
+    ...invoice,
+    invoiceDate: invoice.invoiceDate || today,
+    bookingDate: invoice.bookingDate || today,
+    eventTime: invoice.eventTime || '14:00',
+    setupTime: invoice.setupTime || '11:00',
+    venue: initialVenue,
+    clientAddress: initialVenue,
+    dpPaidAmount: initialDp,
+    remainingAmount: Math.max(0, invTotal - initialDp),
+  };
+}
+
+/** Unique id for a new line item. */
+function newItemId() {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+}
+
 export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
   isOpen,
   onClose,
@@ -61,20 +94,23 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
   onSave,
   existingInvoices = [],
 }) => {
-  const [formData, setFormData] = useState<InvoiceData | null>(invoice);
+  // The dialog is mounted only while open (see AppModals), so the form can be
+  // prepared once on mount instead of resetting it in an effect after a first
+  // render with raw data.
+  const [formData, setFormData] = useState<InvoiceData | null>(() => prepareFormData(invoice));
   const [lastDeletedItem, setLastDeletedItem] = useState<{ item: InvoiceItem; index: number } | null>(null);
   const [autocompleteFeedback, setAutocompleteFeedback] = useState<string | null>(null);
 
   // Density & conflict check on booking date
+  const formId = formData?.id;
+  const formBookingDate = formData?.bookingDate;
   const conflictingBookings = useMemo(() => {
-    if (!formData?.bookingDate || !existingInvoices.length) return [];
+    if (!formBookingDate || !existingInvoices.length) return [];
     return existingInvoices.filter(
       (inv: InvoiceData) =>
-        inv.id !== formData.id &&
-        inv.bookingDate === formData.bookingDate &&
-        inv.status !== 'cancelled'
+        inv.id !== formId && inv.bookingDate === formBookingDate && inv.status !== 'cancelled'
     );
-  }, [formData?.bookingDate, formData?.id, existingInvoices]);
+  }, [formBookingDate, formId, existingInvoices]);
 
   // Smart autocomplete: Unique past clients from existing invoices
   const clientSuggestions = useMemo<ClientSuggestion[]>(() => {
@@ -114,37 +150,6 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
       updateField('clientName', val);
     }
   };
-
-  useEffect(() => {
-    if (invoice) {
-      const today = todayLocalISO();
-      const invTotal = invoice.total || 0;
-      const initialDp = invoice.dpPaidAmount !== undefined
-        ? invoice.dpPaidAmount
-        : invoice.status === 'paid'
-        ? invTotal
-        : invoice.status === 'dp_paid'
-        ? (invoice.dpAmount || Math.round(invTotal * 0.3))
-        : 0;
-      const initialRemaining = Math.max(0, invTotal - initialDp);
-      const initialVenue = invoice.venue !== undefined ? invoice.venue : (invoice.clientAddress || '');
-
-      setFormData({
-        ...invoice,
-        invoiceDate: invoice.invoiceDate || today,
-        bookingDate: invoice.bookingDate || today,
-        eventTime: invoice.eventTime || '14:00',
-        setupTime: invoice.setupTime || '11:00',
-        venue: initialVenue,
-        clientAddress: initialVenue,
-        dpPaidAmount: initialDp,
-        remainingAmount: initialRemaining,
-      });
-    } else {
-      setFormData(null);
-    }
-    setLastDeletedItem(null);
-  }, [invoice, isOpen]);
 
   // Auto-dismiss undo notification after 7 seconds
   useEffect(() => {
@@ -239,7 +244,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
 
   const addItem = () => {
     const newItem: InvoiceItem = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: newItemId(),
       description: '',
       quantity: 1,
       unitPrice: 0,
@@ -253,7 +258,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
     const preset = PRESET_ITEMS[presetIndex];
     if (!preset) return;
     const newItem: InvoiceItem = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: newItemId(),
       description: preset.description,
       quantity: 1,
       unitPrice: preset.amount,

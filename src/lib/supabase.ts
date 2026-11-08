@@ -28,7 +28,7 @@ const QUEUE_KEY = 'rb_pending_sync_queue';
 export interface PendingSyncItem {
   id: string;
   type: 'invoice' | 'inventory' | 'settings' | 'delete_invoice' | 'delete_inventory';
-  payload: any;
+  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- invoice | inventory item | settings
   timestamp: number;
 }
 

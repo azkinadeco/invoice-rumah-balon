@@ -1,3 +1,4 @@
+import type { InvoiceData } from '@/types/invoice';
 import { getPaidAndRemaining } from '@/lib/payment';
 
 export function formatRupiah(amount: number): string {
@@ -48,7 +49,7 @@ export function formatDateIndo(dateStr: string): string {
   }
 }
 
-export function exportInvoicesToCSV(invoices: any[], filename = 'Data_Invoice_RumahBalon.csv') {
+export function exportInvoicesToCSV(invoices: InvoiceData[], filename = 'Data_Invoice_RumahBalon.csv') {
   const headers = [
     'No Invoice',
     'Tanggal Terbit',
@@ -84,7 +85,7 @@ export function exportInvoicesToCSV(invoices: any[], filename = 'Data_Invoice_Ru
       remaining,
       `"${inv.status || ''}"`,
       `"${(inv.items || [])
-        .map((it: any) => `${it.quantity || 1}x ${it.description || ''} (Rp ${it.amount || 0})`)
+        .map((it) => `${it.quantity || 1}x ${it.description || ''} (Rp ${it.amount || 0})`)
         .join('; ')
         .replace(/"/g, '""')}"`,
     ];

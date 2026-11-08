@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -51,45 +51,28 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
   item,
   onSave,
 }) => {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<InventoryCategory>('balon');
-  const [balloonType, setBalloonType] = useState<BalloonType | ''>('retro');
-  const [balloonSize, setBalloonSize] = useState<BalloonSize | ''>('12_inch');
-  const [balloonColor, setBalloonColor] = useState('');
-  const [totalStock, setTotalStock] = useState<number>(1);
-  const [unit, setUnit] = useState('Pack');
-  const [condition, setCondition] = useState<ItemCondition>('baik');
-  const [location, setLocation] = useState('');
-  const [minimumAlertStock, setMinimumAlertStock] = useState<number>(1);
-  const [notes, setNotes] = useState('');
-
-  useEffect(() => {
-    if (item && open) {
-      setName(item.name || '');
-      setCategory(item.category || 'balon');
-      setBalloonType((item.balloonType as BalloonType) || '');
-      setBalloonSize((item.balloonSize as BalloonSize) || '');
-      setBalloonColor(item.balloonColor || '');
-      setTotalStock(typeof item.totalStock === 'number' ? item.totalStock : 1);
-      setUnit(item.unit || (item.category === 'balon' ? 'Pack' : 'Pcs'));
-      setCondition(item.condition || 'baik');
-      setLocation(item.location || '');
-      setMinimumAlertStock(typeof item.minimumAlertStock === 'number' ? item.minimumAlertStock : 1);
-      setNotes(item.notes || '');
-    } else if (open) {
-      setName('');
-      setCategory('balon');
-      setBalloonType('retro');
-      setBalloonSize('12_inch');
-      setBalloonColor('');
-      setTotalStock(10);
-      setUnit('Pack');
-      setCondition('baik');
-      setLocation('Rak Balon');
-      setMinimumAlertStock(3);
-      setNotes('');
-    }
-  }, [item, open]);
+  // Mounted only while open (see InventoryManager), so initial state is enough
+  const [name, setName] = useState(item?.name || '');
+  const [category, setCategory] = useState<InventoryCategory>(item ? item.category || 'balon' : 'balon');
+  const [balloonType, setBalloonType] = useState<BalloonType | ''>(
+    item ? (item.balloonType as BalloonType) || '' : 'retro'
+  );
+  const [balloonSize, setBalloonSize] = useState<BalloonSize | ''>(
+    item ? (item.balloonSize as BalloonSize) || '' : '12_inch'
+  );
+  const [balloonColor, setBalloonColor] = useState(item?.balloonColor || '');
+  const [totalStock, setTotalStock] = useState<number>(
+    item ? (typeof item.totalStock === 'number' ? item.totalStock : 1) : 10
+  );
+  const [unit, setUnit] = useState(
+    item ? item.unit || (item.category === 'balon' ? 'Pack' : 'Pcs') : 'Pack'
+  );
+  const [condition, setCondition] = useState<ItemCondition>(item?.condition || 'baik');
+  const [location, setLocation] = useState(item ? item.location || '' : 'Rak Balon');
+  const [minimumAlertStock, setMinimumAlertStock] = useState<number>(
+    item ? (typeof item.minimumAlertStock === 'number' ? item.minimumAlertStock : 1) : 3
+  );
+  const [notes, setNotes] = useState(item?.notes || '');
 
   // Quick auto name generator for balloons
   const handleAutoGenerateName = () => {
