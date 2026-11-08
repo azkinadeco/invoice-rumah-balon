@@ -419,9 +419,15 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                       className="w-[76px] h-[76px] object-contain rounded"
                     />
                   </div>
-                  <span className="text-[8px] font-black text-white/90 uppercase tracking-widest mt-0.5">
-                    Scan QRIS BCA / All E-Wallet
-                  </span>
+                  {/* Two fixed lines (nowrap) so the caption never breaks mid-phrase */}
+                  <div className="mt-1 flex flex-col items-center leading-tight text-white">
+                    <span className="whitespace-nowrap text-[9.5px] font-extrabold uppercase tracking-wider">
+                      Scan QRIS
+                    </span>
+                    <span className="whitespace-nowrap text-[8.5px] font-medium text-white/90">
+                      BCA &amp; semua e-wallet
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

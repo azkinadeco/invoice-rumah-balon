@@ -1,7 +1,7 @@
 'use client';
 
 import { FilterBar } from '@/components/common/FilterBar';
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { InvoiceData, ScheduleStatus } from '@/types/invoice';
 import { InventoryItem } from '@/types/inventory';
 import { formatDateIndo, formatRupiah, formatWhatsAppPhone } from '@/lib/format';
@@ -99,7 +99,20 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
   const [quickDateFilter, setQuickDateFilter] = useState<'all' | 'today' | 'tomorrow'>('all');
 
   // Month & Year for interactive calendar
-  const today = useMemo(() => new Date(), []);
+  // Re-check the date when the app comes back to the front (PWA left open overnight)
+  const [today, setToday] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () => {
+      const now = new Date();
+      setToday((prev) => (prev.toDateString() === now.toDateString() ? prev : now));
+    };
+    const timer = setInterval(refresh, 60_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
   const [viewYear, setViewYear] = useState(() => today.getFullYear());
   const [viewMonth, setViewMonth] = useState(() => today.getMonth());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
@@ -1512,6 +1525,7 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
         onOpenChange={setCrewSheetOpen}
         invoice={crewSheetInvoice}
         inventoryItems={inventoryItems}
+        allInvoices={invoices}
         onUpdateInvoice={(updated) => {
           setCrewSheetInvoice(updated);
           onUpdateInvoice(updated);

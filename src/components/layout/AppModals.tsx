@@ -66,6 +66,7 @@ export function AppModals() {
           onOpenChange={app.setCrewSheetOpen}
           invoice={app.crewSheetInvoice}
           inventoryItems={app.inventoryItems}
+          allInvoices={app.invoices}
           onUpdateInvoice={(updated) => {
             app.setCrewSheetInvoice(updated);
             app.updateInvoice(updated);

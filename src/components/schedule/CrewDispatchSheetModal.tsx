@@ -45,6 +45,8 @@ interface CrewDispatchSheetModalProps {
   invoice: InvoiceData | null;
   inventoryItems?: InventoryItem[];
   onUpdateInvoice?: (updated: InvoiceData) => void;
+  /** All invoices, to count stock already booked by other events on the same date. */
+  allInvoices?: InvoiceData[];
 }
 
 // html2canvas can't parse oklch()/lab() (Tailwind v4 colors). Resolve any CSS color to plain rgba().
@@ -80,6 +82,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
   invoice,
   inventoryItems = [],
   onUpdateInvoice,
+  allInvoices = [],
 }) => {
   const [isAddingProperty, setIsAddingProperty] = useState(false);
   const [selectedInventoryId, setSelectedInventoryId] = useState('');
@@ -91,6 +94,29 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteInputText, setNoteInputText] = useState('');
+
+  // Stock already booked by OTHER (non-cancelled) events on the same date
+  const invoiceId = invoice?.id;
+  const bookingDate = invoice?.bookingDate;
+  const bookedElsewhere = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!bookingDate) return map;
+    for (const other of allInvoices) {
+      if (other.id === invoiceId || other.status === 'cancelled' || other.bookingDate !== bookingDate) continue;
+      for (const p of other.dispatchedProperties || []) {
+        if (p.inventoryItemId) map.set(p.inventoryItemId, (map.get(p.inventoryItemId) || 0) + (p.quantity || 0));
+      }
+    }
+    return map;
+  }, [allInvoices, invoiceId, bookingDate]);
+
+  /** Units still free for this event: total − other events that day − already in this checklist. */
+  const getAvailable = (it: InventoryItem) => {
+    const inThisSheet = (invoice?.dispatchedProperties || [])
+      .filter((p) => p.inventoryItemId === it.id)
+      .reduce((sum, p) => sum + (p.quantity || 0), 0);
+    return (it.totalStock || 0) - (bookedElsewhere.get(it.id) || 0) - inThisSheet;
+  };
 
   // Filter master stock items for picking
   const filteredStock = useMemo(() => {
@@ -330,6 +356,38 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
     }
 
     if (!name) return;
+    const qty = Math.max(1, propQty);
+
+    if (selectedInventoryId) {
+      const found = inventoryItems.find((i) => i.id === selectedInventoryId);
+      const available = found ? getAvailable(found) : Infinity;
+      if (found && qty > available) {
+        const booked = bookedElsewhere.get(found.id) || 0;
+        const ok = confirm(
+          `Stok "${found.name}" tidak cukup di tanggal ini.\n\n` +
+            `Total stok: ${found.totalStock} ${found.unit}\n` +
+            (booked > 0 ? `Dipakai acara lain di hari yang sama: ${booked} ${found.unit}\n` : '') +
+            `Sisa tersedia: ${Math.max(0, available)} ${found.unit}\n\nTetap tambahkan ${qty} ${found.unit}?`
+        );
+        if (!ok) return;
+      }
+
+      // Same warehouse item already in the checklist: add to its quantity instead of a duplicate row
+      const existing = (invoice.dispatchedProperties || []).find((p) => p.inventoryItemId === selectedInventoryId);
+      if (existing) {
+        onUpdateInvoice?.({
+          ...invoice,
+          dispatchedProperties: (invoice.dispatchedProperties || []).map((p) =>
+            p.id === existing.id ? { ...p, quantity: (p.quantity || 0) + qty } : p
+          ),
+          updatedAt: new Date().toISOString(),
+        });
+        setSelectedInventoryId('');
+        setPropQty(1);
+        setIsAddingProperty(false);
+        return;
+      }
+    }
 
     const newProp: DispatchedProperty = {
       id: `disp-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
@@ -338,7 +396,7 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
       category,
       balloonType,
       balloonSize,
-      quantity: Math.max(1, propQty),
+      quantity: qty,
       unit,
       checkedOut: false,
       checkedIn: false,
@@ -803,6 +861,8 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                       ) : (
                         filteredStock.map((invIt) => {
                           const picked = selectedInventoryId === invIt.id;
+                          const available = getAvailable(invIt);
+                          const booked = bookedElsewhere.get(invIt.id) || 0;
                           return (
                             <button
                               key={invIt.id}
@@ -820,11 +880,27 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
                                 <span className="block font-semibold text-zinc-900 truncate">{invIt.name}</span>
                                 <span className="block text-[10px] text-zinc-500 truncate">
                                   Rak: {invIt.location || 'Gudang'}
+                                  {booked > 0 && (
+                                    <span className="text-amber-700"> • {booked} dipakai acara lain hari ini</span>
+                                  )}
                                 </span>
                               </span>
                               <span className="flex items-center gap-2 shrink-0">
-                                <span className="text-[11px] font-mono font-bold text-zinc-700">
-                                  {invIt.totalStock} {invIt.unit}
+                                <span
+                                  className={`text-right leading-tight font-mono font-bold ${
+                                    available <= 0
+                                      ? 'text-rose-600'
+                                      : available < (invIt.totalStock || 0)
+                                      ? 'text-amber-700'
+                                      : 'text-zinc-700'
+                                  }`}
+                                >
+                                  <span className="block text-[11px]">
+                                    {available <= 0 ? 'Habis' : `Sisa ${available}`}
+                                  </span>
+                                  <span className="block text-[9px] font-medium text-zinc-400">
+                                    dari {invIt.totalStock} {invIt.unit}
+                                  </span>
                                 </span>
                                 <span
                                   className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
