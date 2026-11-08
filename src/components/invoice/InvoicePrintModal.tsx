@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { InvoiceData } from '@/types/invoice';
 import { formatRupiah, formatDateIndo, formatWhatsAppPhone } from '@/lib/format';
 import { InvoicePreview } from '@/components/invoice/InvoicePreview';
+import { buildInvoiceWhatsAppMessage, buildWhatsAppUrl } from '@/lib/whatsapp';
 import {
   Dialog,
   DialogContent,
@@ -292,26 +293,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
       return;
     }
 
-    const isPaid = invoice.status === 'paid';
-    const dpPaid = typeof invoice.dpPaidAmount === 'number' && invoice.dpPaidAmount > 0
-      ? invoice.dpPaidAmount
-      : invoice.status === 'dp_paid'
-      ? (invoice.dpAmount || Math.round(invoice.total * 0.3))
-      : 0;
-    const hasDpPaid = dpPaid > 0 || isPaid;
-    const remainingAmount = typeof invoice.remainingAmount === 'number'
-      ? invoice.remainingAmount
-      : Math.max(0, invoice.total - dpPaid);
-
-    const dpLine = hasDpPaid
-      ? `💳 *DP Diterima:* ${formatRupiah(dpPaid)}\n⏳ *Sisa Tagihan (Pelunasan H-1):* *${isPaid || remainingAmount === 0 ? 'LUNAS ✨' : formatRupiah(remainingAmount)}*`
-      : `💳 *Min DP 30%:* ${formatRupiah(Math.round(invoice.total * 0.3))}`;
-
-    const itemsSummary = (invoice.items || [])
-      .map((it, idx) => `  ${idx + 1}. ${it.description} (${it.quantity || 1} pcs)`)
-      .join('\n');
-
-    const message = `Halo kak ${invoice.clientName || 'Pelanggan'}! 😊🎈\n\nBerikut rincian Invoice pesanan dari *Rumah Balon Decoration*:\n📄 *No. Invoice:* #${invoice.invoiceNumber}\n📅 *Tanggal Acara:* ${formatDateIndo(invoice.bookingDate)}\n⏰ *Waktu:* ${invoice.eventTime || '14:00'} WIB (Setup: ${invoice.setupTime || '11:00'} WIB)\n📍 *Lokasi:* ${invoice.venue || invoice.clientAddress || '—'}\n\n📦 *Rincian Pesanan:*\n${itemsSummary || '  (Sesuai invoice)'}\n\n💰 *Total Tagihan:* *${formatRupiah(invoice.total)}*\n${dpLine}\n\nTransfer ke Rekening:\n🏦 *${invoice.bankName} ${invoice.bankAccountNumber}* a/n *${invoice.bankAccountName}*\n\n(File cetak invoice resmi juga terlampir). Terima kasih kak! ✨`;
+    const message = `${buildInvoiceWhatsAppMessage(invoice)}\n\n(File cetak invoice resmi juga terlampir).`;
 
     try {
       await navigator.clipboard.writeText(message);
@@ -324,12 +306,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
     // Also auto-download PNG so admin can immediately attach it to WhatsApp
     handleDownloadPng();
 
-    const encoded = encodeURIComponent(message);
-    const waUrl = formattedPhone
-      ? `https://wa.me/${formattedPhone}?text=${encoded}`
-      : `https://wa.me/?text=${encoded}`;
-
-    window.open(waUrl, '_blank');
+    window.open(buildWhatsAppUrl(formattedPhone, message), '_blank');
     setShowPhoneEditor(false);
   };
 

@@ -22,13 +22,15 @@ import {
   Phone,
   FileCheck2,
   Check,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 
 interface BusinessSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentSettings: BusinessSettings;
-  onSave: (settings: BusinessSettings, setAsDefault: boolean) => void;
+  onSave: (settings: BusinessSettings) => void;
 }
 
 const SectionCard: React.FC<{ title: string; hint?: string; action?: React.ReactNode; children: React.ReactNode }> = ({
@@ -55,13 +57,14 @@ export const BusinessSettingsModal: React.FC<BusinessSettingsModalProps> = ({
   currentSettings,
   onSave,
 }) => {
+  // The modal is mounted only while open, so the initial value is enough.
+  // (It used to re-copy currentSettings on every parent render, which wiped a
+  // freshly uploaded QRIS image before the admin could press Simpan.)
   const [settings, setSettings] = useState<BusinessSettings>(currentSettings);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [qrisError, setQrisError] = useState<string | null>(null);
+  const [qrisLoading, setQrisLoading] = useState(false);
   const qrisInputRef = useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    setSettings(currentSettings);
-  }, [currentSettings, isOpen]);
 
   const updateField = <K extends keyof BusinessSettings>(key: K, value: BusinessSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -69,18 +72,26 @@ export const BusinessSettingsModal: React.FC<BusinessSettingsModalProps> = ({
 
   const handleQrisUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const compressedBase64 = await compressImageFile(file, 380, 0.85);
-        updateField('qrisImageUrl', compressedBase64);
-      } catch (err) {
-        console.error('Failed to compress QRIS image:', err);
-      }
+    // Reset so picking the same file again still fires onChange
+    e.target.value = '';
+    if (!file) return;
+    setQrisError(null);
+    setQrisLoading(true);
+    try {
+      // 600px keeps a full QRIS poster scannable after printing; stored once in settings
+      const compressedBase64 = await compressImageFile(file, 600, 0.9);
+      updateField('qrisImageUrl', compressedBase64);
+      updateField('showQris', true);
+    } catch (err) {
+      console.error('Failed to compress QRIS image:', err);
+      setQrisError('Gambar tidak bisa dibaca. Coba foto/screenshot lain dalam format JPG atau PNG.');
+    } finally {
+      setQrisLoading(false);
     }
   };
 
-  const handleSubmit = (setAsDefault: boolean) => {
-    onSave(settings, setAsDefault);
+  const handleSubmit = () => {
+    onSave(settings);
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
@@ -104,7 +115,7 @@ export const BusinessSettingsModal: React.FC<BusinessSettingsModalProps> = ({
             <span>Pengaturan Toko</span>
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Dipakai otomatis untuk setiap invoice baru.
+            Berlaku untuk semua invoice dan semua perangkat karyawan.
           </DialogDescription>
         </DialogHeader>
 
@@ -169,9 +180,10 @@ export const BusinessSettingsModal: React.FC<BusinessSettingsModalProps> = ({
                 <div className="flex-1 min-w-0 space-y-2">
                   <p className="text-[11px] text-muted-foreground">
                     {settings.qrisImageUrl
-                      ? 'Gambar QRIS tersimpan.'
-                      : 'Belum ada gambar, invoice memakai placeholder. Unggah foto barcode QRIS toko agar pelanggan bisa scan.'}
+                      ? 'QRIS akan tampil di invoice setelah Anda menekan Simpan.'
+                      : 'Belum ada gambar, QRIS belum tampil di invoice. Unggah foto barcode QRIS toko agar pelanggan bisa scan.'}
                   </p>
+                  {qrisError && <p className="text-[11px] font-medium text-rose-500">{qrisError}</p>}
                   <input
                     ref={qrisInputRef}
                     type="file"
@@ -179,15 +191,33 @@ export const BusinessSettingsModal: React.FC<BusinessSettingsModalProps> = ({
                     onChange={handleQrisUpload}
                     className="hidden"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => qrisInputRef.current?.click()}
-                    className="text-xs h-11 sm:h-9 w-full sm:w-auto rounded-xl border-border hover:bg-card"
-                  >
-                    <Upload className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {settings.qrisImageUrl ? 'Ganti Gambar' : 'Unggah Gambar'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={qrisLoading}
+                      onClick={() => qrisInputRef.current?.click()}
+                      className="text-xs h-11 sm:h-9 flex-1 sm:flex-none rounded-xl border-border hover:bg-card"
+                    >
+                      {qrisLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Upload className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      )}
+                      {settings.qrisImageUrl ? 'Ganti Gambar' : 'Unggah Gambar'}
+                    </Button>
+                    {settings.qrisImageUrl && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => updateField('qrisImageUrl', '')}
+                        aria-label="Hapus gambar QRIS"
+                        className="text-xs h-11 sm:h-9 rounded-xl border-border text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -273,15 +303,8 @@ export const BusinessSettingsModal: React.FC<BusinessSettingsModalProps> = ({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => handleSubmit(false)}
-              className="hidden sm:inline-flex text-xs h-10 rounded-xl border-border text-foreground hover:bg-muted"
-            >
-              Hanya Invoice Ini
-            </Button>
-            <Button
-              type="button"
-              onClick={() => handleSubmit(true)}
+              disabled={qrisLoading || savedSuccess}
+              onClick={handleSubmit}
               className="text-xs h-11 sm:h-10 px-5 rounded-xl bg-gradient-to-r from-[#f370a8] to-[#4d3085] hover:opacity-95 text-white font-bold shadow-md shadow-[#f370a8]/20 transition-all active:scale-95 cursor-pointer"
             >
               {savedSuccess ? (

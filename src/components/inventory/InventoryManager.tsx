@@ -40,6 +40,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { todayLocalISO } from '@/lib/format';
 import { InventoryItemModal } from './InventoryItemModal';
 
 interface InventoryManagerProps {
@@ -117,7 +118,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
       // 3. Condition Filter
       if (conditionFilter === 'low_stock') {
         const minAlert = typeof it.minimumAlertStock === 'number' ? it.minimumAlertStock : 1;
-        return it.totalStock <= minAlert || it.condition === 'habis';
+        if (!(it.totalStock <= minAlert || it.condition === 'habis')) return false;
       } else if (conditionFilter !== 'all' && it.condition !== conditionFilter) {
         return false;
       }
@@ -244,7 +245,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocalISO();
     link.setAttribute('href', url);
     link.setAttribute('download', `Stok_Barang_RumahBalon_${today}.csv`);
     document.body.appendChild(link);

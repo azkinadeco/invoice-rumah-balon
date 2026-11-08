@@ -3,7 +3,9 @@
 import React from 'react';
 import { InvoiceData } from '@/types/invoice';
 import { STATUS_COLORS } from '@/lib/constants';
-import { formatRupiah, formatDateIndo, formatWhatsAppPhone } from '@/lib/format';
+import { formatRupiah, formatDateIndo } from '@/lib/format';
+import { getPaidAndRemaining } from '@/lib/payment';
+import { buildInvoiceWhatsAppUrl } from '@/lib/whatsapp';
 import {
   Dialog,
   DialogContent,
@@ -52,32 +54,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   if (!invoice) return null;
 
   const isPaid = invoice.status === 'paid';
-  const customDp = typeof invoice.dpPaidAmount === 'number' && invoice.dpPaidAmount > 0 ? invoice.dpPaidAmount : undefined;
-  const dpPaid = isPaid
-    ? invoice.total
-    : customDp !== undefined
-    ? customDp
-    : invoice.status === 'dp_paid'
-    ? (invoice.dpAmount || Math.round(invoice.total * 0.3))
-    : 0;
-  const remainingAmount = Math.max(0, invoice.total - dpPaid);
+  const { dpPaid, remaining: remainingAmount } = getPaidAndRemaining(invoice);
   const hasDpPaid = dpPaid > 0;
 
   const handleSendWhatsApp = () => {
-    const formattedPhone = formatWhatsAppPhone(invoice.clientPhone);
-
-    const dpLine = hasDpPaid
-      ? `💳 DP Diterima: *${formatRupiah(dpPaid)}*\n⏳ *Sisa Tagihan (Pelunasan H-1):* *${isPaid || remainingAmount === 0 ? 'LUNAS ✨' : formatRupiah(remainingAmount)}*`
-      : `💳 DP Min 30%: *${formatRupiah(Math.round(invoice.total * 0.3))}*`;
-
-    const message = `Halo kak ${invoice.clientName || ''}! 😊🎈\n\nBerikut rincian Invoice pesanan dari *Rumah Balon Decoration*:\n📄 No. Invoice: *${invoice.invoiceNumber}*\n📅 Tanggal Acara: *${formatDateIndo(invoice.bookingDate)}*\n💰 Total Tagihan: *${formatRupiah(invoice.total)}*\n${dpLine}\n\nTransfer ke Rekening:\n🏦 *${invoice.bankName} ${invoice.bankAccountNumber}* a/n *${invoice.bankAccountName}*\n\nTerima kasih kak! ✨`;
-
-    const encoded = encodeURIComponent(message);
-    const waUrl = formattedPhone
-      ? `https://wa.me/${formattedPhone}?text=${encoded}`
-      : `https://wa.me/?text=${encoded}`;
-
-    window.open(waUrl, '_blank');
+    window.open(buildInvoiceWhatsAppUrl(invoice), '_blank');
   };
 
   return (

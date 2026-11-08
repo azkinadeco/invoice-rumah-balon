@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { exportInvoicesToCSV } from '@/lib/format';
+import React, { useMemo, useState } from 'react';
+import { exportInvoicesToCSV, todayLocalISO } from '@/lib/format';
+import { stripHeavySettings } from '@/lib/businessSettings';
 import { useApp } from '@/components/providers/AppProvider';
 import { InvoiceStatsHeader } from '@/components/invoice/InvoiceStatsHeader';
 import { InvoiceFilterToolbar } from '@/components/invoice/InvoiceFilterToolbar';
@@ -15,8 +16,17 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [periodFilter, setPeriodFilter] = useState<'all' | 'this_month' | 'last_month'>('all');
 
-  const filteredInvoices = invoices.filter((inv) => {
+  const filteredInvoices = useMemo(() => {
     const q = search.toLowerCase().trim();
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth();
+    const thisMonthPrefix = `${curY}-${String(curM + 1).padStart(2, '0')}`;
+    const lastMonthYear = curM === 0 ? curY - 1 : curY;
+    const lastMonthMonth = curM === 0 ? 12 : curM;
+    const lastMonthPrefix = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}`;
+
+    return invoices.filter((inv) => {
     const matchSearch =
       !q ||
       (inv.invoiceNumber || '').toLowerCase().includes(q) ||
@@ -29,13 +39,6 @@ export default function InvoicesPage() {
     const matchStatus = statusFilter === 'all' || inv.status === statusFilter;
 
     let matchPeriod = true;
-    const now = new Date();
-    const curY = now.getFullYear();
-    const curM = now.getMonth();
-    const thisMonthPrefix = `${curY}-${String(curM + 1).padStart(2, '0')}`;
-    const lastMonthYear = curM === 0 ? curY - 1 : curY;
-    const lastMonthMonth = curM === 0 ? 12 : curM;
-    const lastMonthPrefix = `${lastMonthYear}-${String(lastMonthMonth).padStart(2, '0')}`;
 
     if (periodFilter === 'this_month') {
       matchPeriod =
@@ -48,28 +51,33 @@ export default function InvoicesPage() {
     }
 
     return matchSearch && matchStatus && matchPeriod;
-  });
+    });
+  }, [invoices, search, statusFilter, periodFilter]);
 
   const handleExportCSV = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocalISO();
     exportInvoicesToCSV(filteredInvoices, `Data_Invoice_RumahBalon_${today}.csv`);
     showToast('Data invoice berhasil diekspor ke Excel / CSV 📊');
   };
 
   const handleExportBackup = () => {
     const backupData = {
-      invoices,
+      // QRIS image is stored once under `settings`, not repeated per invoice
+      invoices: invoices.map(stripHeavySettings),
       inventoryItems,
+      settings: app.businessSettings,
       exportedAt: new Date().toISOString(),
     };
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
     const downloadAnchor = document.createElement('a');
-    const today = new Date().toISOString().split('T')[0];
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `backup_rumah_balon_${today}.json`);
+    const today = todayLocalISO();
+    downloadAnchor.href = url;
+    downloadAnchor.download = `backup_rumah_balon_${today}.json`;
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+    URL.revokeObjectURL(url);
     try {
       localStorage.setItem('rb_last_backup_date', today);
       localStorage.setItem('rb_last_backup_count', String(invoices.length));
@@ -98,20 +106,35 @@ export default function InvoicesPage() {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          syncInvoices(parsed);
-          showToast('Berhasil memulihkan data invoice! 🎉');
-        } else if (parsed && typeof parsed === 'object') {
-          if (Array.isArray(parsed.invoices)) {
-            syncInvoices(parsed.invoices);
-          }
-          if (Array.isArray(parsed.inventoryItems)) {
-            syncInventoryItems(parsed.inventoryItems);
-          }
-          showToast('Berhasil memulihkan invoice & stok barang! 🎉');
-        } else {
+        const rawInvoices = Array.isArray(parsed) ? parsed : parsed?.invoices;
+        const rawInventory = Array.isArray(parsed) ? undefined : parsed?.inventoryItems;
+        const rawSettings = Array.isArray(parsed) ? undefined : parsed?.settings;
+
+        if (!Array.isArray(rawInvoices) && !Array.isArray(rawInventory) && !rawSettings) {
           alert('Format file backup JSON tidak valid.');
+          return;
         }
+
+        if (Array.isArray(rawInvoices)) {
+          // Drop rows that would crash the app (missing id / number / items)
+          const valid = rawInvoices.filter(
+            (inv) => inv && typeof inv === 'object' && inv.id && inv.invoiceNumber && Array.isArray(inv.items)
+          );
+          const skipped = rawInvoices.length - valid.length;
+          if (valid.length === 0) {
+            alert('File backup tidak berisi invoice yang valid. Data invoice saat ini tidak diubah.');
+          } else {
+            syncInvoices(valid);
+            if (skipped > 0) alert(`${skipped} baris invoice rusak dilewati.`);
+          }
+        }
+        if (Array.isArray(rawInventory) && rawInventory.length > 0) {
+          syncInventoryItems(rawInventory.filter((it) => it && typeof it === 'object' && it.id));
+        }
+        if (rawSettings && typeof rawSettings === 'object') {
+          app.saveSettings(rawSettings);
+        }
+        showToast('Berhasil memulihkan data dari backup! 🎉');
       } catch {
         alert('Gagal membaca file JSON.');
       }

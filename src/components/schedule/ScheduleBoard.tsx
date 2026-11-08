@@ -5,6 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { InvoiceData, ScheduleStatus } from '@/types/invoice';
 import { InventoryItem } from '@/types/inventory';
 import { formatDateIndo, formatRupiah, formatWhatsAppPhone } from '@/lib/format';
+import { getPaidAndRemaining } from '@/lib/payment';
 import { SCHEDULE_STATUS_CONFIG } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -360,39 +361,36 @@ export const ScheduleBoard: React.FC<ScheduleBoardProps> = ({
   const generateWhatsAppMessage = (inv: InvoiceData) => {
     const phone = formatWhatsAppPhone(inv.clientPhone);
     const isPaid = inv.status === 'paid';
-    const dpPaid = isPaid ? inv.total : (inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round(inv.total * 0.3) : 0));
-    const remaining = isPaid ? 0 : Math.max(0, inv.total - dpPaid);
+    const { dpPaid, remaining } = getPaidAndRemaining(inv);
 
     const paymentInfo = isPaid
-      ? `%0A💰 *Status Pembayaran:* Lunas Penuh ✨`
+      ? `\n💰 *Status Pembayaran:* Lunas Penuh ✨`
       : dpPaid > 0
-      ? `%0A💰 *Total Tagihan:* ${formatRupiah(inv.total)}%0A💳 *DP Diterima:* ${formatRupiah(dpPaid)}%0A⏳ *Sisa Tagihan (Pelunasan H-1):* ${formatRupiah(remaining)}`
-      : `%0A💰 *Total Tagihan:* ${formatRupiah(inv.total)} (Min DP 30%: ${formatRupiah(Math.round(inv.total * 0.3))})`;
+      ? `\n💰 *Total Tagihan:* ${formatRupiah(inv.total)}\n💳 *DP Diterima:* ${formatRupiah(dpPaid)}\n⏳ *Sisa Tagihan (Pelunasan H-1):* ${formatRupiah(remaining)}`
+      : `\n💰 *Total Tagihan:* ${formatRupiah(inv.total)} (Min DP 30%: ${formatRupiah(Math.round(inv.total * 0.3))})`;
 
-    const greeting = `Halo Kak ${inv.clientName || 'Pelanggan'}! %0A%0ASalam dari *Rumah Balon Decoration* 🎈%0AKami ingin mengonfirmasi jadwal pemasangan dekorasi acara Kakak:%0A%0A📅 *Tanggal:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}%0A⏰ *Jam Mulai Acara:* ${inv.eventTime || '14:00'} WIB${inv.eventEndTime ? ' - ' + inv.eventEndTime + ' WIB' : ''}%0A🎈 *Jam Setup/Loading Balon:* ${inv.setupTime || '11:00'} WIB%0A📍 *Lokasi/Venue:* ${inv.venue || inv.clientAddress || 'Sesuai kesepakatan'}%0A${inv.themeNote ? '🎨 *Tema Balon:* ' + inv.themeNote + '%0A' : ''}${paymentInfo}%0A%0AMohon konfirmasi bila ada penyesuaian jam atau arahan lokasi ya Kak. Terima kasih banyak! ✨`;
-    return `https://wa.me/${phone}?text=${greeting}`;
+    const greeting = `Halo Kak ${inv.clientName || 'Pelanggan'}! \n\nSalam dari *Rumah Balon Decoration* 🎈\nKami ingin mengonfirmasi jadwal pemasangan dekorasi acara Kakak:\n\n📅 *Tanggal:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}\n⏰ *Jam Mulai Acara:* ${inv.eventTime || '14:00'} WIB${inv.eventEndTime ? ' - ' + inv.eventEndTime + ' WIB' : ''}\n🎈 *Jam Setup/Loading Balon:* ${inv.setupTime || '11:00'} WIB\n📍 *Lokasi/Venue:* ${inv.venue || inv.clientAddress || 'Sesuai kesepakatan'}\n${inv.themeNote ? '🎨 *Tema Balon:* ' + inv.themeNote + '\n' : ''}${paymentInfo}\n\nMohon konfirmasi bila ada penyesuaian jam atau arahan lokasi ya Kak. Terima kasih banyak! ✨`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(greeting)}`;
   };
 
   // Quick WhatsApp Payment Reminder for H-1 balance (Tagihan Pelunasan)
   const generatePaymentReminderMessage = (inv: InvoiceData) => {
     const phone = formatWhatsAppPhone(inv.clientPhone);
-    const dpPaid = inv.dpPaidAmount || (inv.status === 'dp_paid' ? Math.round(inv.total * 0.3) : 0);
-    const remaining = inv.remainingAmount ?? Math.max(0, inv.total - dpPaid);
+    const { dpPaid, remaining } = getPaidAndRemaining(inv);
 
-    const bankDetails = inv.bankName
-      ? `🏦 *${inv.bankName} ${inv.bankAccountNumber}*\na/n *${inv.bankAccountName}*`
-      : '🏦 *BCA 0115792949* a/n *YULIANA PRASETYOWATI*';
+    // Bank details always come from Pengaturan Toko (applied by AppProvider)
+    const bankDetails = `🏦 *${inv.bankName} ${inv.bankAccountNumber}*\na/n *${inv.bankAccountName}*`;
 
-    const msg = `Halo Kak ${inv.clientName || 'Pelanggan'}! 😊🎈%0A%0ASalam hangat dari *Rumah Balon Decoration*.%0AMengingat jadwal pemasangan dekorasi acara Kakak akan loading pada:%0A%0A📅 *Hari/Tanggal:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}%0A⏰ *Jam Loading / Setup:* ${inv.setupTime || '11:00'} WIB%0A📍 *Lokasi:* ${inv.venue || inv.clientAddress || 'Sesuai kesepakatan'}%0A%0AKami ingin menginfokan untuk sisa pelunasan pesanan (#${inv.invoiceNumber}):%0A💰 *Total Tagihan:* ${formatRupiah(inv.total)}%0A💳 *DP Diterima:* ${formatRupiah(dpPaid)}%0A⏳ *Sisa Tagihan (Pelunasan H-1):* *${formatRupiah(remaining)}*%0A%0AMohon dapat melakukan transfer pelunasan ke rekening resmi kami:%0A${bankDetails}%0A%0ASetelah transfer, mohon kirimkan bukti pembayarannya ya Kak agar tim kami segera menjadwalkan loading dekorasi tepat waktu. Terima kasih banyak Kak! ✨🙏`;
+    const msg = `Halo Kak ${inv.clientName || 'Pelanggan'}! 😊🎈\n\nSalam hangat dari *Rumah Balon Decoration*.\nMengingat jadwal pemasangan dekorasi acara Kakak akan loading pada:\n\n📅 *Hari/Tanggal:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}\n⏰ *Jam Loading / Setup:* ${inv.setupTime || '11:00'} WIB\n📍 *Lokasi:* ${inv.venue || inv.clientAddress || 'Sesuai kesepakatan'}\n\nKami ingin menginfokan untuk sisa pelunasan pesanan (#${inv.invoiceNumber}):\n💰 *Total Tagihan:* ${formatRupiah(inv.total)}\n💳 *DP Diterima:* ${formatRupiah(dpPaid)}\n⏳ *Sisa Tagihan (Pelunasan H-1):* *${formatRupiah(remaining)}*\n\nMohon dapat melakukan transfer pelunasan ke rekening resmi kami:\n${bankDetails}\n\nSetelah transfer, mohon kirimkan bukti pembayarannya ya Kak agar tim kami segera menjadwalkan loading dekorasi tepat waktu. Terima kasih banyak Kak! ✨🙏`;
 
-    return `https://wa.me/${phone}?text=${msg}`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   };
 
   // WhatsApp Dispatch Briefing to Crew / Decorators
   const generateCrewBriefMessage = (inv: InvoiceData) => {
-    const crewLine = inv.assignedCrew ? `• *Petugas / Crew:* ${inv.assignedCrew}%0A` : '';
-    const brief = `Halo Tim Dekor Rumah Balon! 🎈👷‍♂️%0A%0A📋 *PENUGASAN JOB DEKORASI:*%0A• *Client:* ${inv.clientName || 'Pelanggan'} (#${inv.invoiceNumber})%0A• *Tanggal:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}%0A${crewLine}• *Jam Mulai Acara:* ${inv.eventTime || '14:00'} WIB${inv.eventEndTime ? ' - ' + inv.eventEndTime + ' WIB' : ''}%0A• *Jam Setup / Loading Balon:* ${inv.setupTime || '11:00'} WIB%0A• *Lokasi / Venue:* ${inv.venue || inv.clientAddress || 'Sesuai arahan'}%0A• *Tema / Konsep Balon:* ${inv.themeNote || 'Sesuai invoice'}%0A${inv.crewNote ? '• *Instruksi Khusus:* ' + inv.crewNote + '%0A' : ''}%0AMohon dicek kelengkapan properti & standby tepat waktu. Semangat tim! ✨`;
-    return `https://wa.me/?text=${brief}`;
+    const crewLine = inv.assignedCrew ? `• *Petugas / Crew:* ${inv.assignedCrew}\n` : '';
+    const brief = `Halo Tim Dekor Rumah Balon! 🎈👷‍♂️\n\n📋 *PENUGASAN JOB DEKORASI:*\n• *Client:* ${inv.clientName || 'Pelanggan'} (#${inv.invoiceNumber})\n• *Tanggal:* ${inv.bookingDate ? formatDateIndo(inv.bookingDate) : '—'}\n${crewLine}• *Jam Mulai Acara:* ${inv.eventTime || '14:00'} WIB${inv.eventEndTime ? ' - ' + inv.eventEndTime + ' WIB' : ''}\n• *Jam Setup / Loading Balon:* ${inv.setupTime || '11:00'} WIB\n• *Lokasi / Venue:* ${inv.venue || inv.clientAddress || 'Sesuai arahan'}\n• *Tema / Konsep Balon:* ${inv.themeNote || 'Sesuai invoice'}\n${inv.crewNote ? '• *Instruksi Khusus:* ' + inv.crewNote + '\n' : ''}\nMohon dicek kelengkapan properti & standby tepat waktu. Semangat tim! ✨`;
+    return `https://wa.me/?text=${encodeURIComponent(brief)}`;
   };
 
   // Copy schedule summary to clipboard

@@ -407,22 +407,22 @@ export const CrewDispatchSheetModal: React.FC<CrewDispatchSheetModalProps> = ({
   const handleShareCrewWA = () => {
     const orderItemsText = (invoice.items || [])
       .map((it, idx) => `${idx + 1}. [ ] ${it.quantity || 1}x ${it.description}`)
-      .join('%0A');
+      .join('\n');
 
     const warehousePropsText =
       (invoice.dispatchedProperties || []).length > 0
-        ? `%0A%0A🛠️ *PROPERTI & ALAT GUDANG YANG WAJIB DIBAWA:*%0A` +
+        ? `\n\n🛠️ *PROPERTI & ALAT GUDANG YANG WAJIB DIBAWA:*\n` +
           (invoice.dispatchedProperties || [])
             .map(
               (p, idx) =>
                 `${idx + 1}. [${p.checkedOut ? '✓' : ' '}] ${p.quantity}x ${p.name} (${p.unit || 'Unit'})`
             )
-            .join('%0A')
+            .join('\n')
         : '';
 
-    const crewLine = invoice.assignedCrew ? `• *Petugas / Crew:* ${invoice.assignedCrew}%0A` : '';
-    const brief = `Halo Tim Dekor Rumah Balon! 🎈👷‍♂️%0A%0A📋 *SURAT TUGAS & CHECKLIST LAPANGAN:*%0A• *Client:* ${invoice.clientName || 'Pelanggan'} (#${invoice.invoiceNumber})%0A• *No. WA Client:* ${invoice.clientPhone || '—'}%0A${crewLine}• *Hari/Tanggal:* ${invoice.bookingDate ? formatDateIndo(invoice.bookingDate) : '—'}%0A• *Jam Mulai Acara:* ${invoice.eventTime || '14:00'} WIB${invoice.eventEndTime ? ' - ' + invoice.eventEndTime + ' WIB' : ''}%0A• *Jam Setup / Loading Balon:* ${invoice.setupTime || '11:00'} WIB%0A• *Lokasi / Venue:* ${invoice.venue || invoice.clientAddress || 'Sesuai arahan'}%0A• *Tema / Konsep Balon:* ${invoice.themeNote || 'Sesuai invoice'}%0A%0A📦 *DAFTAR ITEM / PAKET PESANAN:*%0A${orderItemsText}${warehousePropsText}%0A%0A${invoice.crewNote ? '⚠️ *Instruksi Khusus Crew:* ' + invoice.crewNote + '%0A%0A' : ''}Mohon tim standby tepat waktu dan periksa kelengkapan properti sebelum berangkat. Terima kasih! ✨`;
-    window.open(`https://wa.me/?text=${brief}`, '_blank');
+    const crewLine = invoice.assignedCrew ? `• *Petugas / Crew:* ${invoice.assignedCrew}\n` : '';
+    const brief = `Halo Tim Dekor Rumah Balon! 🎈👷‍♂️\n\n📋 *SURAT TUGAS & CHECKLIST LAPANGAN:*\n• *Client:* ${invoice.clientName || 'Pelanggan'} (#${invoice.invoiceNumber})\n• *No. WA Client:* ${invoice.clientPhone || '—'}\n${crewLine}• *Hari/Tanggal:* ${invoice.bookingDate ? formatDateIndo(invoice.bookingDate) : '—'}\n• *Jam Mulai Acara:* ${invoice.eventTime || '14:00'} WIB${invoice.eventEndTime ? ' - ' + invoice.eventEndTime + ' WIB' : ''}\n• *Jam Setup / Loading Balon:* ${invoice.setupTime || '11:00'} WIB\n• *Lokasi / Venue:* ${invoice.venue || invoice.clientAddress || 'Sesuai arahan'}\n• *Tema / Konsep Balon:* ${invoice.themeNote || 'Sesuai invoice'}\n\n📦 *DAFTAR ITEM / PAKET PESANAN:*\n${orderItemsText}${warehousePropsText}\n\n${invoice.crewNote ? '⚠️ *Instruksi Khusus Crew:* ' + invoice.crewNote + '\n\n' : ''}Mohon tim standby tepat waktu dan periksa kelengkapan properti sebelum berangkat. Terima kasih! ✨`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(brief)}`, '_blank');
   };
 
   const dispatchedProps = invoice.dispatchedProperties || [];

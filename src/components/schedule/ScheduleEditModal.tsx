@@ -71,7 +71,8 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       setEventEndTime(invoice.eventEndTime || '17:00');
       setSetupTime(invoice.setupTime || '11:00');
       setVenue(invoice.venue || invoice.clientAddress || '');
-      setThemeNote(invoice.themeNote || (invoice.items?.[0]?.description ? invoice.items[0].description.slice(0, 50) + '...' : ''));
+      // Don't pre-fill with item text: saving would store it as the theme
+      setThemeNote(invoice.themeNote || '');
       setCrewNote(invoice.crewNote || '');
       setAssignedCrew(invoice.assignedCrew || '');
       setScheduleStatus(invoice.scheduleStatus || 'scheduled');

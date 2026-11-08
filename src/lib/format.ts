@@ -196,3 +196,15 @@ export function validateSetupTime(setupTime?: string, eventTime?: string): strin
   if (eventTime && setupTime > eventTime) return 'Jam setup harus lebih awal dari jam mulai acara.';
   return null;
 }
+
+/**
+ * Today's date as "YYYY-MM-DD" in the device's local time zone.
+ * `new Date().toISOString()` is UTC, which in WIB (UTC+7) still gives
+ * yesterday's date until 07:00 in the morning.
+ */
+export function todayLocalISO(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}

@@ -4,22 +4,13 @@ import React, { useMemo, useState } from 'react';
 import { InvoiceData } from '@/types/invoice';
 import { formatRupiah, formatDateIndo } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { getPaidAndRemaining } from '@/lib/payment';
 import { BellRing, MessageCircle, CheckCircle2, ChevronDown } from 'lucide-react';
 
 /** How many days ahead an unpaid event counts as "due soon" (pelunasan H-1). */
 const DUE_WINDOW_DAYS = 3;
 
-export function getPaidAndRemaining(inv: InvoiceData) {
-  const total = Number(inv.total) || 0;
-  if (inv.status === 'paid') return { dpPaid: total, remaining: 0 };
-  const dpPaid =
-    typeof inv.dpPaidAmount === 'number' && inv.dpPaidAmount > 0
-      ? inv.dpPaidAmount
-      : inv.status === 'dp_paid'
-      ? inv.dpAmount || Math.round(total * 0.3)
-      : 0;
-  return { dpPaid, remaining: Math.max(0, total - dpPaid) };
-}
+export { getPaidAndRemaining };
 
 function daysUntil(dateStr: string): number {
   const [y, m, d] = dateStr.split('-').map(Number);

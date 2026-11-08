@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { InvoiceData, InvoiceItem, InvoiceStatus } from '@/types/invoice';
 import { PRESET_ITEMS, STATUS_COLORS } from '@/lib/constants';
-import { formatRupiah, parseRupiahInput, formatThousand, getNextInvoiceNumber, getEventTimeWarnings, validateSetupTime } from '@/lib/format';
+import { formatRupiah, parseRupiahInput, formatThousand, getNextInvoiceNumber, getEventTimeWarnings, validateSetupTime, todayLocalISO } from '@/lib/format';
 import {
   Dialog,
   DialogContent,
@@ -117,7 +117,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
 
   useEffect(() => {
     if (invoice) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = todayLocalISO();
       const invTotal = invoice.total || 0;
       const initialDp = invoice.dpPaidAmount !== undefined
         ? invoice.dpPaidAmount
@@ -169,7 +169,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
   const timeWarnings = getEventTimeWarnings(formData?.setupTime, formData?.eventTime, formData?.eventEndTime);
 
   const updateField = <K extends keyof InvoiceData>(key: K, value: InvoiceData[K]) => {
-    let updated = { ...formData, [key]: value };
+    const updated = { ...formData, [key]: value };
 
     // When status changes
     if (key === 'status') {
@@ -178,7 +178,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
         updated.dpPaidAmount = updated.total;
         updated.remainingAmount = 0;
       } else if (newStatus === 'dp_paid') {
-        if (!updated.dpPaidAmount || updated.dpPaidAmount === 0) {
+        if (!updated.dpPaidAmount || updated.dpPaidAmount === 0 || updated.dpPaidAmount >= updated.total) {
           const defDp = Math.round(updated.total * (updated.dpMinPercent / 100));
           updated.dpPaidAmount = defDp;
           updated.remainingAmount = Math.max(0, updated.total - defDp);
@@ -186,8 +186,9 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
           updated.remainingAmount = Math.max(0, updated.total - updated.dpPaidAmount);
         }
       } else if (newStatus === 'draft' || newStatus === 'sent') {
-        const paid = updated.dpPaidAmount || 0;
-        updated.remainingAmount = Math.max(0, updated.total - paid);
+        // Draft / terkirim = belum ada uang masuk
+        updated.dpPaidAmount = 0;
+        updated.remainingAmount = updated.total;
       }
     }
 
@@ -221,6 +222,17 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
       updated.dpAmount = dpAmount;
       updated.dpPaidAmount = dpPaid;
       updated.remainingAmount = remaining;
+
+      // Status must match the money: a "Lunas" invoice whose total went up, or
+      // whose DP was lowered, still has a balance to collect.
+      const paidNow = Math.min(updated.dpPaidAmount || 0, total);
+      updated.dpPaidAmount = paidNow;
+      updated.remainingAmount = Math.max(0, total - paidNow);
+      if (updated.status === 'paid' && paidNow < total) {
+        updated.status = paidNow > 0 ? 'dp_paid' : 'sent';
+      } else if (updated.status === 'dp_paid' && total > 0 && paidNow >= total) {
+        updated.status = 'paid';
+      }
     }
     setFormData(updated);
   };

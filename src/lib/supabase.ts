@@ -257,10 +257,11 @@ export async function deleteInventoryFromCloud(id: string): Promise<boolean> {
   }
 }
 
-// 7. Fetch Settings from Supabase
-export async function fetchSettingsFromCloud(): Promise<BusinessSettings | null> {
+// 7. Fetch Settings from Supabase.
+// `ok: false` = request failed (offline / error); `ok: true, data: null` = no settings saved yet.
+export async function fetchSettingsFromCloud(): Promise<{ ok: boolean; data: BusinessSettings | null }> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    return null;
+    return { ok: false, data: null };
   }
   try {
     const controller = new AbortController();
@@ -270,12 +271,12 @@ export async function fetchSettingsFromCloud(): Promise<BusinessSettings | null>
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) return null;
+    if (!res.ok) return { ok: false, data: null };
     const rows: Array<{ id: string; data: BusinessSettings }> = await res.json();
-    return rows[0]?.data || null;
+    return { ok: true, data: rows[0]?.data || null };
   } catch (err) {
     console.warn('Supabase fetch settings error:', err);
-    return null;
+    return { ok: false, data: null };
   }
 }
 

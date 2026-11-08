@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { DEFAULT_BUSINESS_SETTINGS } from '@/lib/constants';
 import { useApp } from '@/components/providers/AppProvider';
 
 // Dynamic lazy-loaded modals for maximum initial load performance
@@ -82,18 +81,7 @@ export function AppModals() {
         <BusinessSettingsModal
           isOpen={app.settingsOpen}
           onClose={() => app.setSettingsOpen(false)}
-          currentSettings={(() => {
-            try {
-              const stored = localStorage.getItem('rb_business_profile');
-              if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed && typeof parsed === 'object') return parsed;
-              }
-            } catch {
-              // ignore
-            }
-            return app.invoices[0] || DEFAULT_BUSINESS_SETTINGS;
-          })()}
+          currentSettings={app.businessSettings}
           onSave={app.saveSettings}
         />
       )}

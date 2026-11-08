@@ -4,6 +4,7 @@ import React from 'react';
 import { InvoiceData } from '@/types/invoice';
 import { formatRupiah, formatDateIndo } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { getPaidAndRemaining } from '@/lib/payment';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
@@ -13,17 +14,7 @@ interface InvoicePreviewProps {
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 }) => {
   // Compute DP paid & remaining balance
   const isPaid = data.status === 'paid';
-  const isDpStatus = data.status === 'dp_paid';
-  const customDp = typeof data.dpPaidAmount === 'number' && data.dpPaidAmount > 0 ? data.dpPaidAmount : undefined;
-
-  const dpPaid = isPaid
-    ? data.total
-    : customDp !== undefined
-    ? customDp
-    : isDpStatus
-    ? (data.dpAmount || Math.round(data.total * 0.3))
-    : 0;
-
+  const { dpPaid } = getPaidAndRemaining(data);
   const hasDpPaid = dpPaid > 0;
   const remainingAmount = Math.max(0, data.total - dpPaid);
 
@@ -269,6 +260,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                     </span>
                   </div>
                 )}
+                {data.discount > 0 && (
+                  <div className="flex items-center justify-between font-semibold text-emerald-700">
+                    <span className="tracking-wide">DISKON</span>
+                    <span className="font-medium">- {formatRupiah(data.discount)}</span>
+                  </div>
+                )}
+                {/* Once a DP is shown the pink bar shows the balance, so state the total here */}
+                {hasDpPaid && (data.discount > 0 || data.tax > 0) && (
+                  <div className="flex items-center justify-between font-bold text-[#2a2e30]">
+                    <span className="tracking-wide">TOTAL</span>
+                    <span>{formatRupiah(data.total)}</span>
+                  </div>
+                )}
                 {/* Rincian DP */}
                 {hasDpPaid && (
                   <div
@@ -412,7 +416,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, scale = 1 
                     <img
                       src={data.qrisImageUrl}
                       alt="QRIS Barcode"
-                      className="w-14 h-14 object-contain rounded"
+                      className="w-[76px] h-[76px] object-contain rounded"
                     />
                   </div>
                   <span className="text-[8px] font-black text-white/90 uppercase tracking-widest mt-0.5">
